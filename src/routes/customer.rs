@@ -1,10 +1,7 @@
 use crate::db::AppState;
 use crate::handlers::customer::*;
 use axum::http::StatusCode;
-use axum::{
-    Router,
-    routing::{get},
-};
+use axum::{Router, routing::get};
 use tower_http::trace::TraceLayer;
 
 pub fn customer_routes() -> Router<AppState> {

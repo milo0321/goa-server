@@ -4,11 +4,11 @@ use std::env;
 
 mod config;
 mod db;
+mod error;
 mod handlers;
 mod models;
 mod plugins;
 mod routes;
-mod error;
 
 #[tokio::main]
 async fn main() {
@@ -26,5 +26,7 @@ async fn main() {
 
     println!("Server running at http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app.into_make_service()).await.unwrap();
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }

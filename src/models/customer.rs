@@ -7,7 +7,7 @@ pub struct Customer {
     pub id: uuid::Uuid,
     pub name: String,
     pub email: String,
-    #[sqlx(default)]  // 处理可能的 NULL 值
+    #[sqlx(default)] // 处理可能的 NULL 值
     pub phone: Option<String>,
     #[sqlx(default)]
     pub company: Option<String>,
