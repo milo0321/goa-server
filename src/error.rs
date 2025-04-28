@@ -1,15 +1,15 @@
+use thiserror::Error;
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
 use sqlx::error::Error as SqlxError;
-use sqlx::types::Json;
-use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error("Not found")]
+    #[error("Not found: {0}")]
     NotFound(String),
     #[error("Database error")]
     DatabaseError(#[from] SqlxError),

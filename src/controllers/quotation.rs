@@ -1,12 +1,14 @@
 // controllers/quotation_controller.rs
+use crate::db::AppState;
 use crate::models::quotation::*;
 use crate::{error::ApiError, services::quotation};
+use axum::extract::State;
 use axum::{
     extract::{Json, Path, Query},
     response::IntoResponse,
 };
-use axum::extract::State;
-use crate::db::AppState;
+use axum::http::StatusCode;
+use uuid::Uuid;
 
 // 查询所有报价单（分页）
 pub async fn list_quotations(
@@ -20,33 +22,39 @@ pub async fn list_quotations(
 // 创建报价单
 pub async fn create_quotation(
     State(state): State<AppState>,
-    Json(quotation): Json<Quotation>,
-) -> Result<impl IntoResponse, ApiError> {
-    let created_quotation = quotation::create_quotation(quotation).await?;
+    Json(create_quotation): Json<CreateQuotation>,
+) -> Result<Json<Quotation>, ApiError> {
+    let created_quotation = quotation::create_quotation(State(state), create_quotation).await?;
     Ok(Json(created_quotation))
 }
 
 // 获取单个报价单详细信息
-pub async fn get_quotation(State(state): State<AppState>, Path(quotation_id): Path<i64>) -> Result<Json<Quotation>, ApiError> {
-    let quotation = quotation::get_quotation(quotation_id).await?;
+pub async fn get_quotation(
+    State(state): State<AppState>,
+    Path(quotation_id): Path<Uuid>,
+) -> Result<Json<Quotation>, ApiError> {
+    let quotation = quotation::get_quotation(State(state), Path(quotation_id)).await?;
     Ok(Json(quotation))
 }
 
 // 更新报价单
 pub async fn update_quotation(
     State(state): State<AppState>,
-    Path(quotation_id): Path<i64>,
-    Json(updated_quotation): Json<Quotation>,
+    Path(quotation_id): Path<Uuid>,
+    Json(updated_quotation): Json<UpdateQuotation>,
 ) -> Result<Json<Quotation>, ApiError> {
-    let updated_quotation = quotation::update_quotation(quotation_id, updated_quotation).await?;
+    let updated_quotation =
+        quotation::update_quotation(State(state), Path(quotation_id), updated_quotation).await?;
     Ok(Json(updated_quotation))
 }
 
 // 删除报价单
 pub async fn delete_quotation(
     State(state): State<AppState>,
-    Path(quotation_id): Path<i64>,
-) -> Result<impl IntoResponse, ApiError> {
-    quotation::delete_quotation(State(state), quotation_id).await?;
-    Ok("Quotation deleted successfully")
+    Path(quotation_id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    quotation::delete_quotation(State(state), Path(quotation_id)).await?;
+    
+    Ok(StatusCode::NO_CONTENT)
 }
+

@@ -6,27 +6,41 @@ use sqlx::encode::{Encode, IsNull};
 use sqlx::postgres::{PgArgumentBuffer, PgHasArrayType, PgTypeInfo, PgValueRef};
 use sqlx::{FromRow, Type};
 use std::error::Error;
+use uuid::Uuid;
 
 /// 简化 JSONB 类型的宏
 macro_rules! impl_jsonb_for {
     ($t:ty) => {
-        impl Type<sqlx::Postgres> for $t {
+        // 增加 trait bound
+        impl Type<sqlx::Postgres> for $t
+        where
+            $t: Serialize + for<'de> Deserialize<'de>,
+        {
             fn type_info() -> PgTypeInfo {
                 PgTypeInfo::with_name("jsonb")
             }
         }
 
-        impl<'q> Encode<'q, sqlx::Postgres> for $t {
-            fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> IsNull {
-                let json = serde_json::to_value(self).unwrap();
-                <serde_json::Value as Encode<sqlx::Postgres>>::encode(json, buf).unwrap()
+        impl<'q> Encode<'q, sqlx::Postgres> for $t
+        where
+            $t: Serialize + for<'de> Deserialize<'de>,
+        {
+            fn encode_by_ref(
+                &self,
+                buf: &mut PgArgumentBuffer,
+            ) -> Result<IsNull, Box<dyn Error + Send + Sync>> {
+                let json = serde_json::to_value(self)?;
+                <serde_json::Value as Encode<sqlx::Postgres>>::encode(json, buf)?;
+                Ok(IsNull::No)
             }
         }
 
-        impl<'r> Decode<'r, sqlx::Postgres> for $t {
+        impl<'r> Decode<'r, sqlx::Postgres> for $t
+        where
+            $t: Serialize + for<'de> Deserialize<'de>,
+        {
             fn decode(value: PgValueRef<'r>) -> Result<Self, Box<dyn Error + Send + Sync>> {
-                let json: serde_json::Value =
-                    <serde_json::Value as Decode<sqlx::Postgres>>::decode(value)?;
+                let json: serde_json::Value = Decode::decode(value)?;
                 Ok(serde_json::from_value(json)?)
             }
         }
@@ -98,9 +112,9 @@ pub struct AdditionalFee {
 /// Quotation model
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
 pub struct Quotation {
-    pub id: i32,
-    pub product_id: i32,
-    pub supplier_id: i32,
+    pub id: Uuid,
+    pub customer_id: Uuid,
+    pub product_name: String,
     pub quantity_tiers: Vec<QuantityTier>,
     pub additional_fees: Option<Vec<AdditionalFee>>,
     pub shipping_prices: Option<Vec<ShippingPrice>>,
@@ -110,8 +124,8 @@ pub struct Quotation {
 /// Input model for creating quotation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct CreateQuotation {
-    pub product_id: i32,
-    pub supplier_id: i32,
+    pub customer_id: Uuid,
+    pub product_name: String,
     pub quantity_tiers: Vec<QuantityTier>,
     pub additional_fees: Option<Vec<AdditionalFee>>,
     pub shipping_prices: Option<Vec<ShippingPrice>>,
@@ -121,7 +135,9 @@ pub struct CreateQuotation {
 /// Input model for updating quotation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct UpdateQuotation {
-    pub id: i32,
+    pub id: Uuid,
+    pub customer_id: Uuid,
+    pub product_name: String,
     pub quantity_tiers: Option<Vec<QuantityTier>>,
     pub additional_fees: Option<Vec<AdditionalFee>>,
     pub shipping_prices: Option<Vec<ShippingPrice>>,
@@ -139,8 +155,8 @@ impl_jsonb_for!(FeeType);
 pub struct QuotationPaginationParams {
     pub page: Option<u32>,
     pub limit: Option<u32>,
-    pub supplier_id: Option<i32>,     // Example filter by supplier
-    pub product_id: Option<i32>,      // Example filter by product
+    pub customer_id: Option<Uuid>,     // Example filter by supplier
+    pub product_name: Option<String>,      // Example filter by product
     pub search_query: Option<String>, // Example search query for specific quotations
 }
 
