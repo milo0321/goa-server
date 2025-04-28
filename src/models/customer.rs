@@ -1,13 +1,14 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, Type)]
 pub struct Customer {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     pub name: String,
     pub email: String,
-    #[sqlx(default)] // 处理可能的 NULL 值
+    #[sqlx(default)]
     pub phone: Option<String>,
     #[sqlx(default)]
     pub company: Option<String>,

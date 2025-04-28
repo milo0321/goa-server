@@ -3,12 +3,15 @@ use dotenvy::dotenv;
 use std::env;
 
 mod config;
+mod controllers;
 mod db;
 mod error;
 mod handlers;
 mod models;
 mod plugins;
+mod repositories;
 mod routes;
+mod services;
 
 #[tokio::main]
 async fn main() {
