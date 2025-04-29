@@ -9,6 +9,8 @@ pub async fn fetch_quotations(
     State(state): State<AppState>,
     params: QuotationPaginationParams,
 ) -> Result<QuotationPaginatedResponse, ApiError> {
+    tracing::debug!("fetch_quotations: {:?}", params);
+
     let page = params.page.unwrap_or(1);
     let limit = params.limit.unwrap_or(10);
     let offset = (page - 1) * limit;
@@ -86,55 +88,14 @@ pub async fn fetch_quotations(
         total: total as u64,
     })
 }
-// 创建报价单
-pub async fn insert_quotation(
-    State(state): State<AppState>,
-    quotation: CreateQuotation,
-) -> Result<Quotation, ApiError> {
-    tracing::debug!("insert_quotation: {:?}", quotation);
-
-    let query = r#"
-        INSERT INTO quotations (
-            customer_id, 
-            product_name, 
-            quantity_tiers,
-            additional_fees,
-            notes,
-            status
-        )
-        VALUES (
-            $1, 
-            $2, 
-            $3,
-            $4,
-            $5,
-            $6
-        )
-        RETURNING *
-    "#;
-
-    let new_quotation = sqlx::query_as::<_, Quotation>(query)
-        .bind(quotation.customer_id)
-        .bind(quotation.product_name)
-        .bind(Json(quotation.quantity_tiers))
-        .bind(Json(quotation.additional_fees))
-        .bind(quotation.notes)
-        .bind(quotation.status)
-        .fetch_one(&state.db)
-        .await
-        .map_err(|e| {
-            tracing::error!("DB failed: {}\nSQL: {}", e, query);
-            ApiError::DatabaseError(e)
-        })?;
-
-    Ok(new_quotation)
-}
 
 // 获取单个报价单
 pub async fn fetch_quotation_by_id(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<Quotation, ApiError> {
+    tracing::debug!("fetch_quotation_by_id: {:?}", quotation_id);
+
     let query = "SELECT * FROM quotations WHERE id = $1";
     let quotation = sqlx::query_as::<_, Quotation>(query)
         .bind(quotation_id)
@@ -148,29 +109,114 @@ pub async fn fetch_quotation_by_id(
     Ok(quotation)
 }
 
+// 创建报价单
+pub async fn insert_quotation(
+    State(state): State<AppState>,
+    payload: CreateQuotation,
+) -> Result<Quotation, ApiError> {
+    tracing::debug!("insert_quotation: {:?}", payload);
+
+    // 1. 用 CTE 插入新行，并在同一个 SQL 里 LEFT JOIN customers
+    let sql = r#"
+        WITH new_row AS (
+            INSERT INTO quotations (
+                customer_id,
+                product_name,
+                quantity_tiers,
+                additional_fees,
+                notes,
+                status
+            ) VALUES (
+                $1, $2, $3::jsonb, $4::jsonb, $5, $6
+            )
+            RETURNING *
+        )
+        SELECT
+            nr.id               AS id,
+            nr.customer_id      AS customer_id,
+            c.name              AS customer_name,
+            nr.product_name     AS product_name,
+            nr.quantity_tiers   AS quantity_tiers,
+            nr.additional_fees  AS additional_fees,
+            nr.notes            AS notes,
+            nr.status           AS status
+        FROM new_row nr
+        LEFT JOIN customers c
+          ON nr.customer_id = c.id
+    "#;
+
+    // 2. 绑定参数并执行
+    let inserted: Quotation = sqlx::query_as::<_, Quotation>(sql)
+        .bind(payload.customer_id)                         // $1
+        .bind(&payload.product_name)                       // $2
+        .bind(Json(payload.quantity_tiers))            // $3
+        .bind(Json(payload.additional_fees))           // $4
+        .bind(&payload.notes)                              // $5
+        .bind(&payload.status)                             // $6
+        .fetch_one(&state.db)
+        .await
+        .map_err(|e| {
+            tracing::error!("插入报价单失败: {}\nSQL: {}", e, sql);
+            ApiError::DatabaseError(e.into())
+        })?;
+
+    // 3. 返回包含 customer_name 的 Quotation
+    Ok(inserted)
+}
+
 // 更新报价单
 pub async fn update_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
-    updated_quotation: UpdateQuotation,
+    payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let query = r#"
-        UPDATE quotations
-        SET quantity_tiers = $1, additional_fees = $2, notes = $4
-        WHERE id = $5
-        RETURNING id, customer_id, product_name, quantity_tiers, additional_fees, notes
+    tracing::debug!("update_quotation {}: {:?}", quotation_id, payload);
+
+    let sql = r#"
+         WITH updated_row AS (
+            UPDATE quotations
+            SET
+                customer_id    = $1,
+                product_name   = $2,
+                quantity_tiers = $3::jsonb,
+                additional_fees= $4::jsonb,
+                notes          = $5,
+                status         = $6
+            WHERE id = $7
+            RETURNING *
+        )
+        SELECT
+            ur.id               AS id,
+            ur.customer_id      AS customer_id,
+            c.name              AS customer_name,
+            ur.product_name     AS product_name,
+            ur.quantity_tiers   AS quantity_tiers,
+            ur.additional_fees  AS additional_fees,
+            ur.notes            AS notes,
+            ur.status           AS status
+        FROM updated_row ur
+        LEFT JOIN customers c
+          ON ur.customer_id = c.id
     "#;
 
-    let quotation = sqlx::query_as::<_, Quotation>(query)
-        .bind(updated_quotation.quantity_tiers)
-        .bind(updated_quotation.additional_fees)
-        .bind(updated_quotation.notes)
-        .bind(quotation_id)
+    // 2. 绑定参数并执行
+    let updated: Quotation = sqlx::query_as::<_, Quotation>(sql)
+        .bind(payload.customer_id)                         // $1
+        .bind(&payload.product_name)                       // $2
+        .bind(Json(payload.quantity_tiers))            // $3
+        .bind(Json(payload.additional_fees))           // $4
+        .bind(&payload.notes)                              // $5
+        .bind(&payload.status)                             // $6
+        .bind(quotation_id)                                // $7
         .fetch_one(&state.db)
         .await
-        .map_err(ApiError::DatabaseError)?;
+        .map_err(|e| {
+            tracing::error!("DB failed: {}\nSQL: {}", e, sql);
+            ApiError::DatabaseError(e)
+        })?;
 
-    Ok(quotation)
+    // 3. 返回完整 Quotation（含 customer_id & customer_name）
+    Ok(updated)
 }
 
 // 删除报价单
@@ -178,12 +224,16 @@ pub async fn delete_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<(), ApiError> {
+    tracing::debug!("update_quotation: {:?}", quotation_id);
     let query = "DELETE FROM quotations WHERE id = $1";
     sqlx::query(query)
         .bind(quotation_id)
         .execute(&state.db)
         .await
-        .map_err(ApiError::DatabaseError)?;
+        .map_err(|e| {
+            tracing::error!("DB failed: {}\nSQL: {}", e, query);
+            ApiError::DatabaseError(e)
+        })?;
 
     Ok(())
 }

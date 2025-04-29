@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow, Type)]
 pub struct Customer {
     pub id: Uuid,
     pub name: String,

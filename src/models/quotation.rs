@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
+use crate::models::customer::Customer;
 
 /// Shipping method options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, Type)]
@@ -67,6 +68,7 @@ pub struct AdditionalFee {
 pub struct Quotation {
     pub id: Uuid,
     pub customer_id: Uuid,
+    pub customer_name: String,
     pub product_name: String,
     pub quantity_tiers: Json<Vec<QuantityTier>>,
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
@@ -96,6 +98,7 @@ pub struct UpdateQuotation {
     pub quantity_tiers: Json<Vec<QuantityTier>>,
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
+    pub status: Option<String>,
 }
 
 /// Quotation-specific Pagination Params

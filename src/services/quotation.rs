@@ -2,6 +2,7 @@ use crate::db::AppState;
 use crate::error::ApiError;
 use crate::{models::quotation::*, repositories::quotation};
 use axum::extract::{Path, State};
+use sqlx::types::Json;
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -16,9 +17,9 @@ pub async fn list_quotations(
 // 创建报价单
 pub async fn create_quotation(
     State(state): State<AppState>,
-    quotation: CreateQuotation,
+    payload: CreateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let created_quotation = quotation::insert_quotation(State(state), quotation).await?;
+    let created_quotation = quotation::insert_quotation(State(state), payload).await?;
     Ok(created_quotation)
 }
 
@@ -35,10 +36,10 @@ pub async fn get_quotation(
 pub async fn update_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
-    updated_quotation: UpdateQuotation,
+    payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
     let quotation =
-        quotation::update_quotation(State(state), Path(quotation_id), updated_quotation).await?;
+        quotation::update_quotation(State(state), Path(quotation_id), payload).await?;
     Ok(quotation)
 }
 
