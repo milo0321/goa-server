@@ -3,18 +3,12 @@ mod quotation;
 
 use crate::{
     db::AppState,
-    routes::{
-        customer::customer_routes,
-        quotation::quotation_routes,
-    },
+    routes::{customer::customer_routes, quotation::quotation_routes},
 };
 use axum::{
     Router,
     body::Body,
-    http:: {
-        Method,
-        Request
-    }
+    http::{Method, Request},
 };
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -46,11 +40,7 @@ pub fn init_routes(state: AppState) -> Router {
             )
         })
         .on_request(|request: &Request<Body>, _span: &tracing::Span| {
-            tracing::info!(
-                "Received {} {}",
-                request.method(),
-                request.uri().path()
-            )
+            tracing::info!("Received {} {}", request.method(), request.uri().path())
         });
 
     Router::new()

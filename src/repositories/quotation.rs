@@ -1,6 +1,7 @@
 // repositories/repository.rs
 use crate::{db::AppState, error::ApiError, models::quotation::*};
 use axum::extract::{Path, State};
+use sqlx::types::Json;
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -104,8 +105,8 @@ pub async fn insert_quotation(
         VALUES (
             $1, 
             $2, 
-            $3::jsonb,
-            $4::jsonb,
+            $3,
+            $4,
             $5,
             $6
         )
@@ -115,20 +116,14 @@ pub async fn insert_quotation(
     let new_quotation = sqlx::query_as::<_, Quotation>(query)
         .bind(quotation.customer_id)
         .bind(quotation.product_name)
-        .bind(serde_json::to_value(quotation.quantity_tiers).map_err(|e| {
-            tracing::error!("序列化 quantity_tiers 失败: {}", e);
-            ApiError::InvalidRequest("无效的 quantityTiers 格式".into())
-        })?)
-        .bind(serde_json::to_value(quotation.additional_fees).map_err(|e| {
-            tracing::error!("序列化 additional_fees 失败: {}", e);
-            ApiError::InvalidRequest("无效的 additionalFees 格式".into())
-        })?)
+        .bind(Json(quotation.quantity_tiers))
+        .bind(Json(quotation.additional_fees))
         .bind(quotation.notes)
         .bind(quotation.status)
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
-            tracing::error!("数据库错误: {}\nSQL: {}", e, query);
+            tracing::error!("DB failed: {}\nSQL: {}", e, query);
             ApiError::DatabaseError(e)
         })?;
 
@@ -161,15 +156,14 @@ pub async fn update_quotation(
 ) -> Result<Quotation, ApiError> {
     let query = r#"
         UPDATE quotations
-        SET quantity_tiers = $1, additional_fees = $2, shipping_prices = $3, notes = $4
+        SET quantity_tiers = $1, additional_fees = $2, notes = $4
         WHERE id = $5
-        RETURNING id, customer_id, product_name, quantity_tiers, additional_fees, shipping_prices, notes
+        RETURNING id, customer_id, product_name, quantity_tiers, additional_fees, notes
     "#;
 
     let quotation = sqlx::query_as::<_, Quotation>(query)
         .bind(updated_quotation.quantity_tiers)
         .bind(updated_quotation.additional_fees)
-        .bind(updated_quotation.shipping_prices)
         .bind(updated_quotation.notes)
         .bind(quotation_id)
         .fetch_one(&state.db)

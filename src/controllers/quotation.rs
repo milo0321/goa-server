@@ -3,9 +3,7 @@ use crate::db::AppState;
 use crate::models::quotation::*;
 use crate::{error::ApiError, services::quotation};
 use axum::extract::State;
-use axum::{
-    extract::{Json, Path, Query},
-};
+use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
 use uuid::Uuid;
 
@@ -53,7 +51,6 @@ pub async fn delete_quotation(
     Path(quotation_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     quotation::delete_quotation(State(state), Path(quotation_id)).await?;
-    
+
     Ok(StatusCode::NO_CONTENT)
 }
-

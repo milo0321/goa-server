@@ -1,4 +1,3 @@
-use thiserror::Error;
 use axum::{
     Json,
     http::StatusCode,
@@ -6,6 +5,7 @@ use axum::{
 };
 use serde::Serialize;
 use sqlx::error::Error as SqlxError;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {

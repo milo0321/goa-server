@@ -1,47 +1,9 @@
-use crate::models::pagination::{PaginatedResponse};
+use crate::models::pagination::PaginatedResponse;
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
-use sqlx::decode::Decode;
-use sqlx::encode::{Encode, IsNull};
-use sqlx::postgres::{PgArgumentBuffer, PgHasArrayType, PgTypeInfo, PgValueRef};
+use sqlx::types::Json;
 use sqlx::{FromRow, Type};
-use std::error::Error;
-use chrono::DateTime;
 use uuid::Uuid;
-
-/// 简化 JSONB 类型的宏
-macro_rules! impl_jsonb_for {
-    ($t:ty) => {
-        impl Type<sqlx::Postgres> for $t {
-            fn type_info() -> PgTypeInfo {
-                PgTypeInfo::with_name("jsonb")
-            }
-        }
-
-        impl<'q> Encode<'q, sqlx::Postgres> for $t {
-            fn encode_by_ref(
-                &self,
-                buf: &mut PgArgumentBuffer,
-            ) -> Result<IsNull, Box<dyn Error + Send + Sync>> {
-                let json = serde_json::to_value(self)?;
-                <serde_json::Value as Encode<sqlx::Postgres>>::encode(json, buf)
-            }
-        }
-
-        impl<'r> Decode<'r, sqlx::Postgres> for $t {
-            fn decode(value: PgValueRef<'r>) -> Result<Self, Box<dyn Error + Send + Sync>> {
-                let json: serde_json::Value = Decode::decode(value)?;
-                Ok(serde_json::from_value(json)?)
-            }
-        }
-
-        impl PgHasArrayType for $t {
-            fn array_type_info() -> PgTypeInfo {
-                PgTypeInfo::with_name("_jsonb")
-            }
-        }
-    };
-}
 
 /// Shipping method options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, Type)]
@@ -106,8 +68,8 @@ pub struct Quotation {
     pub id: Uuid,
     pub customer_id: Uuid,
     pub product_name: String,
-    pub quantity_tiers: Vec<QuantityTier>,
-    pub additional_fees: Option<Vec<AdditionalFee>>,
+    pub quantity_tiers: Json<Vec<QuantityTier>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub status: Option<String>,
     pub notes: Option<String>,
 }
@@ -118,8 +80,8 @@ pub struct Quotation {
 pub struct CreateQuotation {
     pub customer_id: Uuid,
     pub product_name: String,
-    pub quantity_tiers: Vec<QuantityTier>,
-    pub additional_fees: Option<Vec<AdditionalFee>>,
+    pub quantity_tiers: Json<Vec<QuantityTier>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
     pub status: Option<String>,
 }
@@ -131,25 +93,18 @@ pub struct UpdateQuotation {
     pub id: Uuid,
     pub customer_id: Uuid,
     pub product_name: String,
-    pub quantity_tiers: Option<Vec<QuantityTier>>,
-    pub additional_fees: Option<Vec<AdditionalFee>>,
-    pub shipping_prices: Option<Vec<ShippingPrice>>,
+    pub quantity_tiers: Json<Vec<QuantityTier>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
 }
-
-// 应用统一 JSONB 处理
-impl_jsonb_for!(QuantityTier);
-impl_jsonb_for!(AdditionalFee);
-impl_jsonb_for!(ShippingPrice);
-impl_jsonb_for!(FeeType);
 
 /// Quotation-specific Pagination Params
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuotationPaginationParams {
     pub page: Option<u32>,
     pub limit: Option<u32>,
-    pub customer_id: Option<Uuid>,     // Example filter by supplier
-    pub product_name: Option<String>,      // Example filter by product
+    pub customer_id: Option<Uuid>,    // Example filter by supplier
+    pub product_name: Option<String>, // Example filter by product
     pub search_query: Option<String>, // Example search query for specific quotations
 }
 
