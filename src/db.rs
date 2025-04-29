@@ -11,6 +11,13 @@ pub async fn init_db() -> AppState {
     let pool = match PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(5))
+        // .after_connect(|conn, _meta| {
+        //     Box::pin(async move {
+        //         // 启用SQLx查询日志
+        //         conn.execute("SET sqlx.log_level = 'debug';").await?;
+        //         Ok(())
+        //     })
+        // })
         .connect(&db_url)
         .await
     {

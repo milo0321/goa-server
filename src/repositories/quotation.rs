@@ -90,22 +90,47 @@ pub async fn insert_quotation(
     State(state): State<AppState>,
     quotation: CreateQuotation,
 ) -> Result<Quotation, ApiError> {
+    tracing::debug!("insert_quotation: {:?}", quotation);
+
     let query = r#"
-        INSERT INTO quotations (customer_id, product_name, quantity_tiers, additional_fees, shipping_prices, notes)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, customer_id, product_name, quantity_tiers, additional_fees, shipping_prices, notes
+        INSERT INTO quotations (
+            customer_id, 
+            product_name, 
+            quantity_tiers,
+            additional_fees,
+            notes,
+            status
+        )
+        VALUES (
+            $1, 
+            $2, 
+            $3::jsonb,
+            $4::jsonb,
+            $5,
+            $6
+        )
+        RETURNING *
     "#;
 
     let new_quotation = sqlx::query_as::<_, Quotation>(query)
         .bind(quotation.customer_id)
         .bind(quotation.product_name)
-        .bind(quotation.quantity_tiers)
-        .bind(quotation.additional_fees)
-        .bind(quotation.shipping_prices)
+        .bind(serde_json::to_value(quotation.quantity_tiers).map_err(|e| {
+            tracing::error!("序列化 quantity_tiers 失败: {}", e);
+            ApiError::InvalidRequest("无效的 quantityTiers 格式".into())
+        })?)
+        .bind(serde_json::to_value(quotation.additional_fees).map_err(|e| {
+            tracing::error!("序列化 additional_fees 失败: {}", e);
+            ApiError::InvalidRequest("无效的 additionalFees 格式".into())
+        })?)
         .bind(quotation.notes)
+        .bind(quotation.status)
         .fetch_one(&state.db)
         .await
-        .map_err(ApiError::DatabaseError)?;
+        .map_err(|e| {
+            tracing::error!("数据库错误: {}\nSQL: {}", e, query);
+            ApiError::DatabaseError(e)
+        })?;
 
     Ok(new_quotation)
 }
