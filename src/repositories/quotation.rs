@@ -125,9 +125,10 @@ pub async fn insert_quotation(
                 quantity_tiers,
                 additional_fees,
                 notes,
-                status
+                status,
+                inquiry_date
             ) VALUES (
-                $1, $2, $3::jsonb, $4::jsonb, $5, $6
+                $1, $2, $3::jsonb, $4::jsonb, $5, $6, $7
             )
             RETURNING *
         )
@@ -139,7 +140,8 @@ pub async fn insert_quotation(
             nr.quantity_tiers   AS quantity_tiers,
             nr.additional_fees  AS additional_fees,
             nr.notes            AS notes,
-            nr.status           AS status
+            nr.status           AS status,
+            nr.inquiry_date     AS inquiry_date
         FROM new_row nr
         LEFT JOIN customers c
           ON nr.customer_id = c.id
@@ -147,16 +149,17 @@ pub async fn insert_quotation(
 
     // 2. 绑定参数并执行
     let inserted: Quotation = sqlx::query_as::<_, Quotation>(sql)
-        .bind(payload.customer_id)                         // $1
-        .bind(&payload.product_name)                       // $2
-        .bind(Json(payload.quantity_tiers))            // $3
-        .bind(Json(payload.additional_fees))           // $4
-        .bind(&payload.notes)                              // $5
-        .bind(&payload.status)                             // $6
+        .bind(payload.customer_id) // $1
+        .bind(&payload.product_name) // $2
+        .bind(Json(payload.quantity_tiers)) // $3
+        .bind(Json(payload.additional_fees)) // $4
+        .bind(&payload.notes) // $5
+        .bind(&payload.status) // $6
+        .bind(&payload.inquiry_date) // $7
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
-            tracing::error!("插入报价单失败: {}\nSQL: {}", e, sql);
+            tracing::error!("insert_quotation failed: {}\nSQL: {}", e, sql);
             ApiError::DatabaseError(e.into())
         })?;
 
@@ -181,8 +184,9 @@ pub async fn update_quotation(
                 quantity_tiers = $3::jsonb,
                 additional_fees= $4::jsonb,
                 notes          = $5,
-                status         = $6
-            WHERE id = $7
+                status         = $6,
+                inquiry_date   = COALESCE($7, inquiry_date)
+            WHERE id = $8
             RETURNING *
         )
         SELECT
@@ -193,7 +197,8 @@ pub async fn update_quotation(
             ur.quantity_tiers   AS quantity_tiers,
             ur.additional_fees  AS additional_fees,
             ur.notes            AS notes,
-            ur.status           AS status
+            ur.status           AS status,
+            ur.inquiry_date     AS inquiry_date
         FROM updated_row ur
         LEFT JOIN customers c
           ON ur.customer_id = c.id
@@ -201,17 +206,18 @@ pub async fn update_quotation(
 
     // 2. 绑定参数并执行
     let updated: Quotation = sqlx::query_as::<_, Quotation>(sql)
-        .bind(payload.customer_id)                         // $1
-        .bind(&payload.product_name)                       // $2
-        .bind(Json(payload.quantity_tiers))            // $3
-        .bind(Json(payload.additional_fees))           // $4
-        .bind(&payload.notes)                              // $5
-        .bind(&payload.status)                             // $6
-        .bind(quotation_id)                                // $7
+        .bind(payload.customer_id) // $1
+        .bind(&payload.product_name) // $2
+        .bind(Json(payload.quantity_tiers)) // $3
+        .bind(Json(payload.additional_fees)) // $4
+        .bind(&payload.notes) // $5
+        .bind(&payload.status) // $6
+        .bind(&payload.inquiry_date) // $7
+        .bind(quotation_id) // $8
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
-            tracing::error!("DB failed: {}\nSQL: {}", e, sql);
+            tracing::error!("update_quotation failed: {}\nSQL: {}", e, sql);
             ApiError::DatabaseError(e)
         })?;
 
@@ -224,14 +230,14 @@ pub async fn delete_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<(), ApiError> {
-    tracing::debug!("update_quotation: {:?}", quotation_id);
+    tracing::debug!("delete_quotation: {:?}", quotation_id);
     let query = "DELETE FROM quotations WHERE id = $1";
     sqlx::query(query)
         .bind(quotation_id)
         .execute(&state.db)
         .await
         .map_err(|e| {
-            tracing::error!("DB failed: {}\nSQL: {}", e, query);
+            tracing::error!("delete_quotation failed: {}\nSQL: {}", e, query);
             ApiError::DatabaseError(e)
         })?;
 

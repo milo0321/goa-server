@@ -1,10 +1,10 @@
 use crate::models::pagination::PaginatedResponse;
+use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
-use crate::models::customer::Customer;
 
 /// Shipping method options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, Type)]
@@ -74,6 +74,8 @@ pub struct Quotation {
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub status: Option<String>,
     pub notes: Option<String>,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub inquiry_date: DateTime<Utc>, // 新增字段
 }
 
 /// Input model for creating quotation
@@ -86,6 +88,8 @@ pub struct CreateQuotation {
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
     pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inquiry_date: Option<DateTime<Utc>>, // 可选字段，前端可不传
 }
 
 /// Input model for updating quotation
@@ -99,6 +103,7 @@ pub struct UpdateQuotation {
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
     pub status: Option<String>,
+    pub inquiry_date: Option<DateTime<Utc>>, // 可选的更新时间
 }
 
 /// Quotation-specific Pagination Params

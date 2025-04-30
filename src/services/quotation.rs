@@ -38,8 +38,7 @@ pub async fn update_quotation(
     Path(quotation_id): Path<Uuid>,
     payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let quotation =
-        quotation::update_quotation(State(state), Path(quotation_id), payload).await?;
+    let quotation = quotation::update_quotation(State(state), Path(quotation_id), payload).await?;
     Ok(quotation)
 }
 
