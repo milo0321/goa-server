@@ -103,6 +103,7 @@ pub struct UpdateQuotation {
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub notes: Option<String>,
     pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inquiry_date: Option<DateTime<Utc>>, // 可选的更新时间
 }
 
