@@ -2,7 +2,6 @@ use crate::db::AppState;
 use crate::error::ApiError;
 use crate::{models::quotation::*, repositories::quotation};
 use axum::extract::{Path, State};
-use sqlx::types::Json;
 use uuid::Uuid;
 
 // 查询所有报价单（分页）

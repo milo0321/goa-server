@@ -132,12 +132,10 @@ pub async fn insert_quotation(
                 quantity,
                 certifications,
                 notes,
-                quantity_tiers,
-                additional_fees,
                 status,
                 inquiry_date
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $0, $10, $11, $12, $13::jsonb, $14::jsonb, $15, $16
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
             )
             RETURNING *
         )
@@ -156,10 +154,10 @@ pub async fn insert_quotation(
             nr.quantity         AS quantity,
             nr.certifications   AS certifications,
             nr.notes            AS notes,
-            nr.quantity_tiers   AS quantity_tiers,
-            nr.additional_fees  AS additional_fees,
             nr.status           AS status,
-            nr.inquiry_date     AS inquiry_date
+            nr.inquiry_date     AS inquiry_date,
+            nr.quantity_tiers   AS quantity_tiers,
+            nr.additional_fees  AS additional_fees
         FROM new_row nr
         LEFT JOIN customers c
           ON nr.customer_id = c.id
@@ -179,10 +177,8 @@ pub async fn insert_quotation(
         .bind(&payload.quantity)                // $10
         .bind(&payload.certifications)          // $11
         .bind(&payload.notes)                   // $12
-        .bind(Json(payload.quantity_tiers))     // $13
-        .bind(Json(payload.additional_fees))    // $14
-        .bind(&payload.status)                  // $15
-        .bind(&payload.inquiry_date)            // $16
+        .bind(&payload.status)                  // $13
+        .bind(&payload.inquiry_date)            // $14
         .fetch_one(&state.db)
         .await
         .map_err(|e| {

@@ -70,9 +70,6 @@ pub struct Quotation {
     pub id: Uuid,
     pub customer_id: Uuid,
     pub customer_name: String,
-    pub product_name: String,
-    pub quantity_tiers: Json<Vec<QuantityTier>>,
-    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub article: String,
     pub client: Option<String>,
     pub size: Option<String>,
@@ -87,6 +84,8 @@ pub struct Quotation {
     pub notes: Option<String>,
     #[serde(with = "chrono::serde::ts_milliseconds")]
     pub inquiry_date: DateTime<Utc>, // 新增字段
+    pub quantity_tiers: Option<Json<Vec<QuantityTier>>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
 }
 
 /// Input model for creating quotation
@@ -94,9 +93,6 @@ pub struct Quotation {
 #[serde(rename_all = "camelCase")]
 pub struct CreateQuotation {
     pub customer_id: Uuid,
-    pub product_name: String,
-    pub quantity_tiers: Json<Vec<QuantityTier>>,
-    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub article: String,
     pub client: Option<String>,
     pub size: Option<String>,
@@ -119,9 +115,6 @@ pub struct CreateQuotation {
 pub struct UpdateQuotation {
     pub id: Uuid,
     pub customer_id: Uuid,
-    pub product_name: String,
-    pub quantity_tiers: Json<Vec<QuantityTier>>,
-    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
     pub article: String,
     pub client: Option<String>,
     pub size: Option<String>,
@@ -136,6 +129,8 @@ pub struct UpdateQuotation {
     pub status: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inquiry_date: Option<DateTime<Utc>>, // 可选的更新时间
+    pub quantity_tiers: Option<Json<Vec<QuantityTier>>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
 }
 
 /// Quotation-specific Pagination Params
