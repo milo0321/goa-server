@@ -121,14 +121,23 @@ pub async fn insert_quotation(
         WITH new_row AS (
             INSERT INTO quotations (
                 customer_id,
-                product_name,
+                article,
+                client,
+                size,
+                material,
+                color,
+                details,
+                branding,
+                packing,
+                quantity,
+                certifications,
+                notes,
                 quantity_tiers,
                 additional_fees,
-                notes,
                 status,
                 inquiry_date
             ) VALUES (
-                $1, $2, $3::jsonb, $4::jsonb, $5, $6, $7
+                $1, $2, $3, $4, $5, $6, $7, $8, $0, $10, $11, $12, $13::jsonb, $14::jsonb, $15, $16
             )
             RETURNING *
         )
@@ -136,10 +145,19 @@ pub async fn insert_quotation(
             nr.id               AS id,
             nr.customer_id      AS customer_id,
             c.name              AS customer_name,
-            nr.product_name     AS product_name,
+            nr.article          AS article,
+            nr.client           AS client,
+            nr.size             AS size,
+            nr.material         AS material,
+            nr.color            AS color,
+            nr.details          AS details,
+            nr.branding         AS branding,
+            nr.packing          AS packing,
+            nr.quantity         AS quantity,
+            nr.certifications   AS certifications,
+            nr.notes            AS notes,
             nr.quantity_tiers   AS quantity_tiers,
             nr.additional_fees  AS additional_fees,
-            nr.notes            AS notes,
             nr.status           AS status,
             nr.inquiry_date     AS inquiry_date
         FROM new_row nr
@@ -149,13 +167,22 @@ pub async fn insert_quotation(
 
     // 2. 绑定参数并执行
     let inserted: Quotation = sqlx::query_as::<_, Quotation>(sql)
-        .bind(payload.customer_id) // $1
-        .bind(&payload.product_name) // $2
-        .bind(Json(payload.quantity_tiers)) // $3
-        .bind(Json(payload.additional_fees)) // $4
-        .bind(&payload.notes) // $5
-        .bind(&payload.status) // $6
-        .bind(&payload.inquiry_date) // $7
+        .bind(payload.customer_id)              // $1
+        .bind(&payload.article)                 // $2
+        .bind(&payload.client)                  // $3
+        .bind(&payload.size)                    // $4
+        .bind(&payload.material)                // $5
+        .bind(&payload.color)                   // $6
+        .bind(&payload.details)                 // $7
+        .bind(&payload.branding)                // $8
+        .bind(&payload.packing)                 // $9
+        .bind(&payload.quantity)                // $10
+        .bind(&payload.certifications)          // $11
+        .bind(&payload.notes)                   // $12
+        .bind(Json(payload.quantity_tiers))     // $13
+        .bind(Json(payload.additional_fees))    // $14
+        .bind(&payload.status)                  // $15
+        .bind(&payload.inquiry_date)            // $16
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
@@ -180,7 +207,7 @@ pub async fn update_quotation(
             UPDATE quotations
             SET
                 customer_id    = $1,
-                product_name   = $2,
+                article   = $2,
                 quantity_tiers = $3::jsonb,
                 additional_fees= $4::jsonb,
                 notes          = $5,
@@ -193,7 +220,7 @@ pub async fn update_quotation(
             ur.id               AS id,
             ur.customer_id      AS customer_id,
             c.name              AS customer_name,
-            ur.product_name     AS product_name,
+            ur.article          AS article,
             ur.quantity_tiers   AS quantity_tiers,
             ur.additional_fees  AS additional_fees,
             ur.notes            AS notes,
@@ -207,7 +234,7 @@ pub async fn update_quotation(
     // 2. 绑定参数并执行
     let updated: Quotation = sqlx::query_as::<_, Quotation>(sql)
         .bind(payload.customer_id) // $1
-        .bind(&payload.product_name) // $2
+        .bind(&payload.article) // $2
         .bind(Json(payload.quantity_tiers)) // $3
         .bind(Json(payload.additional_fees)) // $4
         .bind(&payload.notes) // $5
