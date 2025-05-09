@@ -13,8 +13,13 @@ CREATE TABLE quotations (
                             packing TEXT,
                             quantity TEXT,
                             certifications TEXT,
-                            quantity_tiers JSONB,
+                            price TEXT,
+                            extra_cost TEXT,
+                            sample_time JSONB,
+                            mass_time JSONB,
+                            quote_prices JSONB,
                             additional_fees JSONB,
+                            packing_details JSONB,
                             notes TEXT,
                             status TEXT NOT NULL CHECK (status IN ('draft', 'quoted', 'ordered', 'canceled')),
                             inquiry_date TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -30,5 +35,5 @@ CREATE INDEX idx_quotations_article ON quotations(article);
 CREATE INDEX idx_quotations_inquiry_date ON quotations(inquiry_date);
 
 ALTER TABLE quotations
-    ALTER COLUMN quantity_tiers TYPE JSONB
-    USING quantity_tiers::JSONB;
+    ALTER COLUMN quote_prices TYPE JSONB
+    USING quote_prices::JSONB;

@@ -38,19 +38,19 @@ pub struct FeeType {
 /// Shipping price structure
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, FromRow)]
 #[serde(rename_all = "camelCase")]
-pub struct ShippingPrice {
-    pub method: ShippingMethod,
+pub struct QuantityPrice {
+    pub quantity: i32,
     pub unit_price: OrderedFloat<f64>,
     pub currency: Option<String>,
-    pub destination: Option<String>,
-    pub terms: Option<String>,
 }
 
 /// Quantity-based tier pricing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub struct QuantityTier {
-    pub quantity: i32,
-    pub prices: Vec<ShippingPrice>,
+pub struct QuotePrice {
+    pub method: String,
+    pub destination: Option<String>,
+    pub terms: Option<String>,
+    pub prices: Vec<QuantityPrice>,
 }
 
 /// Additional fees (e.g., samples, molds)
@@ -63,11 +63,46 @@ pub struct AdditionalFee {
     pub conditions: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PackingField {
+    pub value: String,
+    pub unit: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SizeField {
+    pub length: OrderedFloat<f32>,
+    pub width: OrderedFloat<f32>,
+    pub height: OrderedFloat<f32>,
+    pub unit: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PackingDetail {
+    pub inner_pack: PackingField,
+    pub outer_pack: PackingField,
+    pub carton_size: SizeField,
+    pub weight: PackingField,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ProductionTime {
+    pub time_type: String,
+    pub from_time: i32,
+    pub to_time: Option<i32>,
+    pub unit: String,
+}
+
 /// Quotation model
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Quotation {
     pub id: Uuid,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub inquiry_date: DateTime<Utc>, // 新增字段
     pub customer_id: Uuid,
     pub customer_name: String,
     pub article: String,
@@ -80,12 +115,15 @@ pub struct Quotation {
     pub packing: Option<String>,
     pub quantity: Option<String>,
     pub certifications: Option<String>,
+    pub price: Option<String>,
+    pub extra_cost: Option<String>,
+    pub sample_time: Option<Json<ProductionTime>>,
+    pub mass_time: Option<Json<ProductionTime>>,
+    pub quote_prices: Option<Json<Vec<QuotePrice>>>,
+    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
+    pub packing_details: Option<Json<Vec<PackingDetail>>>,
     pub status: Option<String>,
     pub notes: Option<String>,
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub inquiry_date: DateTime<Utc>, // 新增字段
-    pub quantity_tiers: Option<Json<Vec<QuantityTier>>>,
-    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
 }
 
 /// Input model for creating quotation
@@ -103,6 +141,8 @@ pub struct CreateQuotation {
     pub packing: Option<String>,
     pub quantity: Option<String>,
     pub certifications: Option<String>,
+    pub price: Option<String>,
+    pub extra_cost: Option<String>,
     pub notes: Option<String>,
     pub status: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -125,12 +165,17 @@ pub struct UpdateQuotation {
     pub packing: Option<String>,
     pub quantity: Option<String>,
     pub certifications: Option<String>,
+    pub price: Option<String>,
+    pub extra_cost: Option<String>,
     pub notes: Option<String>,
     pub status: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inquiry_date: Option<DateTime<Utc>>, // 可选的更新时间
-    pub quantity_tiers: Option<Json<Vec<QuantityTier>>>,
+    pub sample_time: Option<Json<ProductionTime>>,
+    pub mass_time: Option<Json<ProductionTime>>,
+    pub quote_prices: Option<Json<Vec<QuotePrice>>>,
     pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
+    pub packing_details: Option<Json<Vec<PackingDetail>>>,
 }
 
 /// Quotation-specific Pagination Params

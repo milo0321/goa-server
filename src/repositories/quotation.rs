@@ -131,54 +131,63 @@ pub async fn insert_quotation(
                 packing,
                 quantity,
                 certifications,
+                price,
+                extra_cost,
                 notes,
                 status,
                 inquiry_date
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
             )
             RETURNING *
         )
         SELECT
-            nr.id               AS id,
-            nr.customer_id      AS customer_id,
+            r.id                AS id,
+            r.customer_id       AS customer_id,
             c.name              AS customer_name,
-            nr.article          AS article,
-            nr.client           AS client,
-            nr.size             AS size,
-            nr.material         AS material,
-            nr.color            AS color,
-            nr.details          AS details,
-            nr.branding         AS branding,
-            nr.packing          AS packing,
-            nr.quantity         AS quantity,
-            nr.certifications   AS certifications,
-            nr.notes            AS notes,
-            nr.status           AS status,
-            nr.inquiry_date     AS inquiry_date,
-            nr.quantity_tiers   AS quantity_tiers,
-            nr.additional_fees  AS additional_fees
-        FROM new_row nr
+            r.article           AS article,
+            r.client            AS client,
+            r.size              AS size,
+            r.material          AS material,
+            r.color             AS color,
+            r.details           AS details,
+            r.branding          AS branding,
+            r.packing           AS packing,
+            r.quantity          AS quantity,
+            r.certifications    AS certifications,
+            r.price             AS price,
+            r.extra_cost        AS extra_cost,
+            r.notes             AS notes,
+            r.status            AS status,
+            r.inquiry_date      AS inquiry_date,
+            r.sample_time       AS sample_time,
+            r.mass_time         AS mass_time,
+            r.quote_prices      AS quote_prices,
+            r.additional_fees   AS additional_fees,
+            r.packing_details   AS packing_details
+        FROM new_row r
         LEFT JOIN customers c
-          ON nr.customer_id = c.id
+          ON r.customer_id = c.id
     "#;
 
     // 2. 绑定参数并执行
     let inserted: Quotation = sqlx::query_as::<_, Quotation>(sql)
-        .bind(payload.customer_id)              // $1
-        .bind(&payload.article)                 // $2
-        .bind(&payload.client)                  // $3
-        .bind(&payload.size)                    // $4
-        .bind(&payload.material)                // $5
-        .bind(&payload.color)                   // $6
-        .bind(&payload.details)                 // $7
-        .bind(&payload.branding)                // $8
-        .bind(&payload.packing)                 // $9
-        .bind(&payload.quantity)                // $10
-        .bind(&payload.certifications)          // $11
-        .bind(&payload.notes)                   // $12
-        .bind(&payload.status)                  // $13
-        .bind(&payload.inquiry_date)            // $14
+        .bind(payload.customer_id) // $1
+        .bind(&payload.article) // $2
+        .bind(&payload.client) // $3
+        .bind(&payload.size) // $4
+        .bind(&payload.material) // $5
+        .bind(&payload.color) // $6
+        .bind(&payload.details) // $7
+        .bind(&payload.branding) // $8
+        .bind(&payload.packing) // $9
+        .bind(&payload.quantity) // $10
+        .bind(&payload.certifications) // $11
+        .bind(&payload.price) // $12
+        .bind(&payload.extra_cost) // $13
+        .bind(&payload.notes) // $14
+        .bind(&payload.status) // $15
+        .bind(&payload.inquiry_date) // $16
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
@@ -202,41 +211,83 @@ pub async fn update_quotation(
          WITH updated_row AS (
             UPDATE quotations
             SET
-                customer_id    = $1,
-                article   = $2,
-                quantity_tiers = $3::jsonb,
-                additional_fees= $4::jsonb,
-                notes          = $5,
-                status         = $6,
-                inquiry_date   = COALESCE($7, inquiry_date)
-            WHERE id = $8
+                customer_id     = $1,
+                article         = $2,
+                client          = $3,
+                size            = $4,
+                material        = $5,
+                color           = $6,
+                details         = $7,
+                branding        = $8,
+                packing         = $9
+                quantity        = $10,
+                certifications  = $11,
+                price           = $12,
+                extra_cost      = $13,
+                notes           = $14,
+                status          = $15,
+                inquiry_date    = COALESCE($16, inquiry_date),
+                sample_time     = $17::jsonb,
+                mass_time       = $18::jsonb,
+                quote_prices    = $19::jsonb,
+                additional_fees = $20::jsonb,
+                packing_details = $21::jsonb
+            WHERE id = $22
             RETURNING *
         )
         SELECT
-            ur.id               AS id,
-            ur.customer_id      AS customer_id,
+            r.id                AS id,
+            r.customer_id       AS customer_id,
             c.name              AS customer_name,
-            ur.article          AS article,
-            ur.quantity_tiers   AS quantity_tiers,
-            ur.additional_fees  AS additional_fees,
-            ur.notes            AS notes,
-            ur.status           AS status,
-            ur.inquiry_date     AS inquiry_date
-        FROM updated_row ur
+            r.article           AS article,
+            r.client            AS client,
+            r.size              AS size,
+            r.material          AS material,
+            r.color             AS color,
+            r.details           AS details,
+            r.branding          AS branding,
+            r.packing           AS packing,
+            r.quantity          AS quantity,
+            r.certifications    AS certifications,
+            r.price             AS price,
+            r.extra_cost        AS extra_cost,
+            r.notes             AS notes,
+            r.status            AS status,
+            r.inquiry_date      AS inquiry_date,
+            r.sample_time       AS sample_time,
+            r.mass_time         AS mass_time,
+            r.quote_prices      AS quote_prices,
+            r.additional_fees   AS additional_fees,
+            r.packing_details   AS packing_details
+        FROM updated_row r
         LEFT JOIN customers c
-          ON ur.customer_id = c.id
+          ON r.customer_id = c.id
     "#;
 
     // 2. 绑定参数并执行
     let updated: Quotation = sqlx::query_as::<_, Quotation>(sql)
         .bind(payload.customer_id) // $1
         .bind(&payload.article) // $2
-        .bind(Json(payload.quantity_tiers)) // $3
-        .bind(Json(payload.additional_fees)) // $4
-        .bind(&payload.notes) // $5
-        .bind(&payload.status) // $6
-        .bind(&payload.inquiry_date) // $7
-        .bind(quotation_id) // $8
+        .bind(&payload.client) // $3
+        .bind(&payload.size) // $4
+        .bind(&payload.material) // $5
+        .bind(&payload.color) // $6
+        .bind(&payload.details) // $7
+        .bind(&payload.branding) // $8
+        .bind(&payload.packing) // $9
+        .bind(&payload.quantity) // $10
+        .bind(&payload.certifications) // $11
+        .bind(&payload.price) // $12
+        .bind(&payload.extra_cost) // $13
+        .bind(&payload.notes) // $14
+        .bind(&payload.status) // $15
+        .bind(&payload.inquiry_date) // $16
+        .bind(Json(payload.sample_time)) // $17
+        .bind(Json(payload.mass_time)) // $18
+        .bind(Json(payload.quote_prices)) // $19
+        .bind(Json(payload.additional_fees)) // $20
+        .bind(Json(payload.packing_details)) // $21
+        .bind(quotation_id) // $22
         .fetch_one(&state.db)
         .await
         .map_err(|e| {
