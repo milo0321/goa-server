@@ -66,8 +66,8 @@ pub struct AdditionalFee {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct PackingField {
-    pub value: String,
-    pub unit: String,
+    pub value: OrderedFloat<f32>,
+    pub unit : String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -76,16 +76,16 @@ pub struct SizeField {
     pub length: OrderedFloat<f32>,
     pub width: OrderedFloat<f32>,
     pub height: OrderedFloat<f32>,
-    pub unit: String,
+    pub unit : String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct PackingDetail {
-    pub inner_pack: PackingField,
-    pub outer_pack: PackingField,
+    pub bag_pack: PackingField,
+    pub carton_pack: PackingField,
     pub carton_size: SizeField,
-    pub weight: PackingField,
+    pub weight : PackingField,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -93,7 +93,7 @@ pub struct ProductionTime {
     pub time_type: String,
     pub from_time: i32,
     pub to_time: Option<i32>,
-    pub unit: String,
+    pub unit : String,
 }
 
 /// Quotation model
@@ -127,7 +127,7 @@ pub struct Quotation {
 }
 
 /// Input model for creating quotation
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateQuotation {
     pub customer_id: Uuid,
@@ -145,12 +145,15 @@ pub struct CreateQuotation {
     pub extra_cost: Option<String>,
     pub notes: Option<String>,
     pub status: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub inquiry_date: Option<DateTime<Utc>>, // 可选字段，前端可不传
+    #[serde(
+        deserialize_with = "chrono::serde::ts_milliseconds::deserialize",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inquiry_date: DateTime<Utc>,
 }
 
 /// Input model for updating quotation
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQuotation {
     pub id: Uuid,
@@ -169,13 +172,16 @@ pub struct UpdateQuotation {
     pub extra_cost: Option<String>,
     pub notes: Option<String>,
     pub status: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub inquiry_date: Option<DateTime<Utc>>, // 可选的更新时间
-    pub sample_time: Option<Json<ProductionTime>>,
-    pub mass_time: Option<Json<ProductionTime>>,
-    pub quote_prices: Option<Json<Vec<QuotePrice>>>,
-    pub additional_fees: Option<Json<Vec<AdditionalFee>>>,
-    pub packing_details: Option<Json<Vec<PackingDetail>>>,
+    #[serde(
+        deserialize_with = "chrono::serde::ts_milliseconds::deserialize",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inquiry_date: DateTime<Utc>,
+    pub sample_time: Option<ProductionTime>,
+    pub mass_time: Option<ProductionTime>,
+    pub quote_prices: Option<Vec<QuotePrice>>,
+    pub additional_fees: Option<Vec<AdditionalFee>>,
+    pub packing_details: Option<Vec<PackingDetail>>,
 }
 
 /// Quotation-specific Pagination Params

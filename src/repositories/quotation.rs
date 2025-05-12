@@ -141,33 +141,9 @@ pub async fn insert_quotation(
             )
             RETURNING *
         )
-        SELECT
-            r.id                AS id,
-            r.customer_id       AS customer_id,
-            c.name              AS customer_name,
-            r.article           AS article,
-            r.client            AS client,
-            r.size              AS size,
-            r.material          AS material,
-            r.color             AS color,
-            r.details           AS details,
-            r.branding          AS branding,
-            r.packing           AS packing,
-            r.quantity          AS quantity,
-            r.certifications    AS certifications,
-            r.price             AS price,
-            r.extra_cost        AS extra_cost,
-            r.notes             AS notes,
-            r.status            AS status,
-            r.inquiry_date      AS inquiry_date,
-            r.sample_time       AS sample_time,
-            r.mass_time         AS mass_time,
-            r.quote_prices      AS quote_prices,
-            r.additional_fees   AS additional_fees,
-            r.packing_details   AS packing_details
+        SELECT r.*, c.name AS customer_name
         FROM new_row r
-        LEFT JOIN customers c
-          ON r.customer_id = c.id
+        LEFT JOIN customers c ON r.customer_id = c.id
     "#;
 
     // 2. 绑定参数并执行
@@ -219,7 +195,7 @@ pub async fn update_quotation(
                 color           = $6,
                 details         = $7,
                 branding        = $8,
-                packing         = $9
+                packing         = $9,
                 quantity        = $10,
                 certifications  = $11,
                 price           = $12,
@@ -227,41 +203,18 @@ pub async fn update_quotation(
                 notes           = $14,
                 status          = $15,
                 inquiry_date    = COALESCE($16, inquiry_date),
-                sample_time     = $17::jsonb,
-                mass_time       = $18::jsonb,
-                quote_prices    = $19::jsonb,
-                additional_fees = $20::jsonb,
-                packing_details = $21::jsonb
+                sample_time     = $17,
+                mass_time       = $18,
+                quote_prices    = $19,
+                additional_fees = $20,
+                packing_details = $21,
+                updated_at      = now()
             WHERE id = $22
             RETURNING *
         )
-        SELECT
-            r.id                AS id,
-            r.customer_id       AS customer_id,
-            c.name              AS customer_name,
-            r.article           AS article,
-            r.client            AS client,
-            r.size              AS size,
-            r.material          AS material,
-            r.color             AS color,
-            r.details           AS details,
-            r.branding          AS branding,
-            r.packing           AS packing,
-            r.quantity          AS quantity,
-            r.certifications    AS certifications,
-            r.price             AS price,
-            r.extra_cost        AS extra_cost,
-            r.notes             AS notes,
-            r.status            AS status,
-            r.inquiry_date      AS inquiry_date,
-            r.sample_time       AS sample_time,
-            r.mass_time         AS mass_time,
-            r.quote_prices      AS quote_prices,
-            r.additional_fees   AS additional_fees,
-            r.packing_details   AS packing_details
+        SELECT r.*, c.name AS customer_name
         FROM updated_row r
-        LEFT JOIN customers c
-          ON r.customer_id = c.id
+        LEFT JOIN customers c ON r.customer_id = c.id
     "#;
 
     // 2. 绑定参数并执行
@@ -282,11 +235,11 @@ pub async fn update_quotation(
         .bind(&payload.notes) // $14
         .bind(&payload.status) // $15
         .bind(&payload.inquiry_date) // $16
-        .bind(Json(payload.sample_time)) // $17
-        .bind(Json(payload.mass_time)) // $18
-        .bind(Json(payload.quote_prices)) // $19
-        .bind(Json(payload.additional_fees)) // $20
-        .bind(Json(payload.packing_details)) // $21
+        .bind(payload.sample_time.map(Json)) // $17
+        .bind(payload.mass_time.map(Json)) // $18
+        .bind(payload.quote_prices.map(Json)) // $19
+        .bind(payload.additional_fees.map(Json)) // $20
+        .bind(payload.packing_details.map(Json)) // $21
         .bind(quotation_id) // $22
         .fetch_one(&state.db)
         .await
