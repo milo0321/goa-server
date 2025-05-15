@@ -1,6 +1,6 @@
--- 0001_create_customers_table.sql
+-- 20250422155000_create_customers_table.sql
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
                            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                            name TEXT NOT NULL,
                            email TEXT UNIQUE NOT NULL,
@@ -8,6 +8,6 @@ CREATE TABLE customers (
                            company TEXT,
                            position TEXT,
                            address TEXT,
-                           created_at TIMESTAMP NOT NULL DEFAULT now(),
-                           updated_at TIMESTAMP NOT NULL DEFAULT now()
+                           created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -3,12 +3,15 @@ use dotenvy::dotenv;
 use std::env;
 
 mod config;
+mod controllers;
 mod db;
+mod error;
 mod handlers;
 mod models;
 mod plugins;
+mod repositories;
 mod routes;
-mod error;
+mod services;
 
 #[tokio::main]
 async fn main() {
@@ -26,5 +29,7 @@ async fn main() {
 
     println!("Server running at http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app.into_make_service()).await.unwrap();
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }
