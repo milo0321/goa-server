@@ -1,9 +1,10 @@
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Arc<PgPool>,
 }
 
 pub async fn init_db() -> AppState {
@@ -39,5 +40,9 @@ pub async fn init_db() -> AppState {
         .await
         .expect("Failed to run migrations");
 
-    AppState { db: pool }
+    AppState { db: Arc::new(pool) }
+}
+
+pub fn db_conn(state: &AppState) -> &PgPool {
+    &*state.db
 }

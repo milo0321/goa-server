@@ -1,3 +1,5 @@
+use axum::response::{IntoResponse, Response};
+use axum::Json;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
@@ -20,7 +22,14 @@ pub struct Customer {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl IntoResponse for Customer {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateCustomer {
     pub name: String,
     pub email: String,
@@ -30,7 +39,14 @@ pub struct CreateCustomer {
     pub address: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+impl IntoResponse for CreateCustomer {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateCustomer {
     pub name: Option<String>,
     pub email: Option<String>,
@@ -38,4 +54,10 @@ pub struct UpdateCustomer {
     pub company: Option<String>,
     pub position: Option<String>,
     pub address: Option<String>,
+}
+
+impl IntoResponse for UpdateCustomer {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
 }

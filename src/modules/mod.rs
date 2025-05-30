@@ -1,3 +1,3 @@
 pub mod customer;
-pub mod pagination;
+pub mod email;
 pub mod quotation;

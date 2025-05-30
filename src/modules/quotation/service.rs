@@ -1,6 +1,7 @@
+use super::model::*;
+use super::*;
 use crate::db::AppState;
 use crate::error::ApiError;
-use crate::{models::quotation::*, repositories::quotation};
 use axum::extract::{Path, State};
 use uuid::Uuid;
 
@@ -9,7 +10,7 @@ pub async fn list_quotations(
     State(state): State<AppState>,
     params: QuotationPaginationParams,
 ) -> Result<QuotationPaginatedResponse, ApiError> {
-    let response = quotation::fetch_quotations(State(state), params).await?;
+    let response = repository::fetch_quotations(State(state), params).await?;
     Ok(response)
 }
 
@@ -18,7 +19,7 @@ pub async fn create_quotation(
     State(state): State<AppState>,
     payload: CreateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let created_quotation = quotation::insert_quotation(State(state), payload).await?;
+    let created_quotation = repository::insert_quotation(State(state), payload).await?;
     Ok(created_quotation)
 }
 
@@ -27,7 +28,7 @@ pub async fn get_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<Quotation, ApiError> {
-    let quotation = quotation::fetch_quotation_by_id(State(state), Path(quotation_id)).await?;
+    let quotation = repository::fetch_quotation_by_id(State(state), Path(quotation_id)).await?;
     Ok(quotation)
 }
 
@@ -37,7 +38,7 @@ pub async fn update_quotation(
     Path(quotation_id): Path<Uuid>,
     payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let quotation = quotation::update_quotation(State(state), Path(quotation_id), payload).await?;
+    let quotation = repository::update_quotation(State(state), Path(quotation_id), payload).await?;
     Ok(quotation)
 }
 
@@ -46,6 +47,6 @@ pub async fn delete_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<(), ApiError> {
-    quotation::delete_quotation(State(state), Path(quotation_id)).await?;
+    repository::delete_quotation(State(state), Path(quotation_id)).await?;
     Ok(())
 }

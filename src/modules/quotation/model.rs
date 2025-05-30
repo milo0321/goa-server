@@ -1,4 +1,4 @@
-use crate::models::pagination::PaginatedResponse;
+use crate::common::pagination::PaginatedResponse;
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
@@ -67,7 +67,7 @@ pub struct AdditionalFee {
 #[serde(rename_all = "camelCase")]
 pub struct PackingField {
     pub value: OrderedFloat<f32>,
-    pub unit : String,
+    pub unit: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -76,7 +76,7 @@ pub struct SizeField {
     pub length: OrderedFloat<f32>,
     pub width: OrderedFloat<f32>,
     pub height: OrderedFloat<f32>,
-    pub unit : String,
+    pub unit: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -85,7 +85,7 @@ pub struct PackingDetail {
     pub bag_pack: PackingField,
     pub carton_pack: PackingField,
     pub carton_size: SizeField,
-    pub weight : PackingField,
+    pub weight: PackingField,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -93,7 +93,7 @@ pub struct ProductionTime {
     pub time_type: String,
     pub from_time: i32,
     pub to_time: Option<i32>,
-    pub unit : String,
+    pub unit: String,
 }
 
 /// Quotation model

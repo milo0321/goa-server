@@ -1,4 +1,6 @@
+use axum::response::{IntoResponse, Response};
 // src/models/pagination.rs
+use axum::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,5 +37,14 @@ impl<T> PaginatedResponse<T> {
 
     pub fn _has_prev(&self) -> bool {
         self.page > 1
+    }
+}
+
+impl<T> IntoResponse for PaginatedResponse<T>
+where
+    T: serde::Serialize,
+{
+    fn into_response(self) -> Response {
+        Json(self).into_response()
     }
 }

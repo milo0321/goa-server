@@ -1,8 +1,9 @@
 // repositories/repository.rs
-use crate::{db::AppState, error::ApiError, models::quotation::*};
+use crate::{db::AppState, db::db_conn, error::ApiError};
 use axum::extract::{Path, State};
 use sqlx::types::Json;
 use uuid::Uuid;
+use super::model::*;
 
 // 查询所有报价单（分页）
 pub async fn fetch_quotations(
@@ -73,12 +74,12 @@ pub async fn fetch_quotations(
     let count_query = format!("SELECT COUNT(*) FROM quotations q {}", where_clause);
     tracing::debug!(count_query);
     let total: i64 = sqlx::query_scalar(&count_query)
-        .fetch_one(&state.db)
+        .fetch_one(db_conn(&state))
         .await?;
 
     let mut quotations = Vec::new();
     if total > 0 {
-        quotations = query.fetch_all(&state.db).await?;
+        quotations = query.fetch_all(db_conn(&state)).await?;
     }
 
     Ok(QuotationPaginatedResponse {
@@ -99,7 +100,7 @@ pub async fn fetch_quotation_by_id(
     let query = "SELECT * FROM quotations WHERE id = $1";
     let quotation = sqlx::query_as::<_, Quotation>(query)
         .bind(quotation_id)
-        .fetch_one(&state.db)
+        .fetch_one(db_conn(&state))
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => ApiError::NotFound("Quotation not found".to_string()),
@@ -164,11 +165,11 @@ pub async fn insert_quotation(
         .bind(&payload.notes) // $14
         .bind(&payload.status) // $15
         .bind(&payload.inquiry_date) // $16
-        .fetch_one(&state.db)
+        .fetch_one(db_conn(&state))
         .await
         .map_err(|e| {
             tracing::error!("insert_quotation failed: {}\nSQL: {}", e, sql);
-            ApiError::DatabaseError(e.into())
+            ApiError::DatabaseError(e)
         })?;
 
     // 3. 返回包含 customer_name 的 Quotation
@@ -241,7 +242,7 @@ pub async fn update_quotation(
         .bind(payload.additional_fees.map(Json)) // $20
         .bind(payload.packing_details.map(Json)) // $21
         .bind(quotation_id) // $22
-        .fetch_one(&state.db)
+        .fetch_one(db_conn(&state))
         .await
         .map_err(|e| {
             tracing::error!("update_quotation failed: {}\nSQL: {}", e, sql);
@@ -261,7 +262,7 @@ pub async fn delete_quotation(
     let query = "DELETE FROM quotations WHERE id = $1";
     sqlx::query(query)
         .bind(quotation_id)
-        .execute(&state.db)
+        .execute(db_conn(&state))
         .await
         .map_err(|e| {
             tracing::error!("delete_quotation failed: {}\nSQL: {}", e, query);
