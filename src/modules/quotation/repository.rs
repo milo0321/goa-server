@@ -1,9 +1,9 @@
 // repositories/repository.rs
+use super::model::*;
 use crate::{db::AppState, db::db_conn, error::ApiError};
 use axum::extract::{Path, State};
 use sqlx::types::Json;
 use uuid::Uuid;
-use super::model::*;
 
 // 查询所有报价单（分页）
 pub async fn fetch_quotations(

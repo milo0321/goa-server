@@ -2,7 +2,7 @@ use axum::Json;
 use axum::response::{IntoResponse, Response};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow};
+use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -25,8 +25,7 @@ pub struct EmailAccount {
     pub updated_at: DateTime<Utc>,
 }
 
-impl IntoResponse for EmailAccount
-{
+impl IntoResponse for EmailAccount {
     fn into_response(self) -> Response {
         Json(self).into_response()
     }
@@ -39,8 +38,7 @@ pub struct CreateEmailAccount {
     pub fields: EmailAccountFields,
 }
 
-impl IntoResponse for CreateEmailAccount
-{
+impl IntoResponse for CreateEmailAccount {
     fn into_response(self) -> Response {
         Json(self).into_response()
     }
@@ -54,8 +52,7 @@ pub struct UpdateEmailAccount {
     pub fields: EmailAccountFields,
 }
 
-impl IntoResponse for UpdateEmailAccount
-{
+impl IntoResponse for UpdateEmailAccount {
     fn into_response(self) -> Response {
         Json(self).into_response()
     }

@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::MethodRouter, Router};
+use axum::{Router, http::StatusCode, routing::MethodRouter};
 use tower_http::trace::TraceLayer;
 
 pub fn resource_router<S>(

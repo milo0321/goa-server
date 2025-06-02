@@ -1,13 +1,13 @@
-use std::fs;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use sqlx::PgPool;
-use uuid::Uuid;
+use super::model::*;
 use crate::common::pagination::{PaginatedResponse, PaginationParams};
 use crate::db::AppState;
 use crate::error::ApiError;
 use crate::modules::email::repository;
-use super::model::*;
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use sqlx::PgPool;
+use std::fs;
+use uuid::Uuid;
 
 pub async fn list_accounts(
     State(state): State<AppState>,

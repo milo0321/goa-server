@@ -1,9 +1,9 @@
 use crate::db::AppState;
 use crate::plugin::loader::load_plugins;
 use axum::{
+    Router,
     body::Body,
     http::{Method, Request},
-    Router,
 };
 use std::sync::Arc;
 use tokio::task::JoinHandle;

@@ -142,7 +142,7 @@ pub async fn fetch_emails(pool: &PgPool) {
     //         return;
     //     }
     // };
-    // 
+    //
     // for config in configs {
     //     // 模拟从服务器拉邮件
     //     let email = EmailMessage {
@@ -153,7 +153,7 @@ pub async fn fetch_emails(pool: &PgPool) {
     //         received_at: Utc::now().naive_utc(),
     //         body: "Test Body".to_string(),
     //     };
-    // 
+    //
     //     match repository::save_email(pool, &email).await {
     //         Ok(email_id) => {
     //             // 可选：保存附件

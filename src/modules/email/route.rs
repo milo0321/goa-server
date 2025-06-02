@@ -1,12 +1,8 @@
-use axum::{
-    routing::get
-    ,
-    Router,
-};
-use axum::routing::{delete, post, put};
 use crate::common::router::resource_router;
 use crate::db::AppState;
 use crate::modules::email::controller::*;
+use axum::routing::{delete, post, put};
+use axum::{Router, routing::get};
 
 pub fn email_routes() -> Router<AppState> {
     resource_router(

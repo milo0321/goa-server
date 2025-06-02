@@ -6,9 +6,9 @@ use crate::{
     db::AppState,
 };
 use axum::{
-    extract::{Path, State, Query},
-    http::StatusCode,
     debug_handler,
+    extract::{Path, Query, State},
+    http::StatusCode,
 };
 use uuid::Uuid;
 

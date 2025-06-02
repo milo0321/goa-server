@@ -1,7 +1,8 @@
 use super::model::{CreateCustomer, Customer, UpdateCustomer};
 use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
-    db::AppState, db::db_conn,
+    db::AppState,
+    db::db_conn,
     error::ApiError,
 };
 use axum::extract::{Path, State};

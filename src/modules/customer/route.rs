@@ -2,8 +2,8 @@ use super::controller::*;
 use crate::common::router::resource_router;
 use crate::db::AppState;
 use axum::{
-    routing::{delete, get, post, put},
     Router,
+    routing::{delete, get, post, put},
 };
 
 pub fn customer_routes() -> Router<AppState> {
