@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 // 查询所有报价单（分页）
 pub async fn fetch_quotations(
-    State(state): State<AppState>,
+    state: &AppState,
     params: QuotationPaginationParams,
 ) -> Result<QuotationPaginatedResponse, ApiError> {
     tracing::debug!("fetch_quotations: {:?}", params);
@@ -92,7 +92,7 @@ pub async fn fetch_quotations(
 
 // 获取单个报价单
 pub async fn fetch_quotation_by_id(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<Quotation, ApiError> {
     tracing::debug!("fetch_quotation_by_id: {:?}", quotation_id);
@@ -112,7 +112,7 @@ pub async fn fetch_quotation_by_id(
 
 // 创建报价单
 pub async fn insert_quotation(
-    State(state): State<AppState>,
+    state: &AppState,
     payload: CreateQuotation,
 ) -> Result<Quotation, ApiError> {
     tracing::debug!("insert_quotation: {:?}", payload);
@@ -178,7 +178,7 @@ pub async fn insert_quotation(
 
 // 更新报价单
 pub async fn update_quotation(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(quotation_id): Path<Uuid>,
     payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
@@ -255,7 +255,7 @@ pub async fn update_quotation(
 
 // 删除报价单
 pub async fn delete_quotation(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<(), ApiError> {
     tracing::debug!("delete_quotation: {:?}", quotation_id);

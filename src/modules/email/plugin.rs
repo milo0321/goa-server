@@ -19,7 +19,7 @@ impl EmailModule {
 
 impl AppModule for EmailModule {
     fn name(&self) -> &'static str {
-        "email"
+        "emails"
     }
 
     fn route(&self) -> Router<AppState> {

@@ -18,7 +18,7 @@ impl CustomerModule {
 
 impl AppModule for CustomerModule {
     fn name(&self) -> &'static str {
-        "customer"
+        "customers"
     }
 
     fn route(&self) -> Router<AppState> {

@@ -6,7 +6,8 @@ use axum::routing::{delete, get, post, put};
 
 pub fn quotation_routes() -> Router<AppState> {
     resource_router(
-        get(list_quotations), // 自动处理提取器
+        "quotations",
+        get(list_quotations),
         post(create_quotation),
         get(get_quotation),
         put(update_quotation),

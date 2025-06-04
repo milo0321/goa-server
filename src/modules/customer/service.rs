@@ -5,47 +5,41 @@ use crate::{
     db::AppState,
     error::ApiError,
 };
-use axum::extract::{Path, State};
+use axum::extract::Path;
 use axum::http::StatusCode;
 use uuid::Uuid;
 
 pub async fn list_customers(
-    State(state): State<AppState>,
+    state: &AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<Customer>, ApiError> {
-    let response = repository::list_customers(State(state), params).await?;
+    let response = repository::list_customers(&state, params).await?;
     Ok(response)
 }
 
-pub async fn get_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Customer, ApiError> {
-    let response = repository::get_customer(State(state), Path(id)).await?;
+pub async fn get_customer(state: &AppState, id: Uuid) -> Result<Customer, ApiError> {
+    let response = repository::get_customer(&state, Path(id)).await?;
     Ok(response)
 }
 
 pub async fn create_customer(
-    State(state): State<AppState>,
+    state: &AppState,
     params: CreateCustomer,
 ) -> Result<Customer, ApiError> {
-    let response: Customer = repository::create_customer(State(state), params).await?;
+    let response: Customer = repository::create_customer(&state, params).await?;
     Ok(response)
 }
 
 pub async fn update_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    state: &AppState,
+    id: Uuid,
     params: UpdateCustomer,
 ) -> Result<Customer, ApiError> {
-    let response = repository::update_customer(State(state), Path(id), params).await?;
+    let response = repository::update_customer(&state, id, params).await?;
     Ok(response)
 }
 
-pub async fn delete_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
-    repository::delete_customer(State(state), Path(id)).await?;
+pub async fn delete_customer(state: &AppState, id: Uuid) -> Result<StatusCode, ApiError> {
+    repository::delete_customer(&state, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

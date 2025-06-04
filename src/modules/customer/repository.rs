@@ -5,11 +5,11 @@ use crate::{
     db::db_conn,
     error::ApiError,
 };
-use axum::extract::{Path, State};
+use axum::extract::Path;
 use uuid::Uuid;
 
 pub async fn list_customers(
-    State(state): State<AppState>,
+    state: &AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<Customer>, ApiError> {
     // Set default values if not provided
@@ -48,10 +48,7 @@ pub async fn list_customers(
     })
 }
 
-pub async fn get_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Customer, ApiError> {
+pub async fn get_customer(state: &AppState, Path(id): Path<Uuid>) -> Result<Customer, ApiError> {
     let sql = r#"
         SELECT * FROM customers WHERE id = $1
         "#;
@@ -68,7 +65,7 @@ pub async fn get_customer(
 }
 
 pub async fn create_customer(
-    State(state): State<AppState>,
+    state: &AppState,
     params: CreateCustomer,
 ) -> Result<Customer, ApiError> {
     tracing::debug!("Creating customer with payload: {:?}", params);
@@ -96,8 +93,8 @@ pub async fn create_customer(
 }
 
 pub async fn update_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    state: &AppState,
+    id: Uuid,
     params: UpdateCustomer,
 ) -> Result<Customer, ApiError> {
     let sql = r#"
@@ -131,10 +128,7 @@ pub async fn update_customer(
     Ok(customer)
 }
 
-pub async fn delete_customer(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<(), ApiError> {
+pub async fn delete_customer(state: &AppState, id: Uuid) -> Result<(), ApiError> {
     let sql = "DELETE FROM customers WHERE id = $1";
     sqlx::query(sql)
         .bind(id)

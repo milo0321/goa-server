@@ -10,28 +10,25 @@ use std::fs;
 use uuid::Uuid;
 
 pub async fn list_accounts(
-    State(state): State<AppState>,
+    state: &AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailAccount>, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
-pub async fn get_account(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<EmailAccount, ApiError> {
+pub async fn get_account(state: &AppState, Path(id): Path<Uuid>) -> Result<EmailAccount, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
 pub async fn create_account(
-    State(state): State<AppState>,
+    state: &AppState,
     params: CreateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
 pub async fn update_account(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(id): Path<Uuid>,
     params: UpdateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
@@ -39,35 +36,32 @@ pub async fn update_account(
 }
 
 pub async fn delete_account(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
 pub async fn list_messages(
-    State(state): State<AppState>,
+    state: &AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailMessage>, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
-pub async fn get_message(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<EmailMessage, ApiError> {
+pub async fn get_message(state: &AppState, Path(id): Path<Uuid>) -> Result<EmailMessage, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
 pub async fn create_message(
-    State(state): State<AppState>,
+    state: &AppState,
     params: CreateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
     Err(ApiError::NotImplemented)
 }
 
 pub async fn update_message(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(id): Path<Uuid>,
     params: UpdateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
@@ -75,7 +69,7 @@ pub async fn update_message(
 }
 
 pub async fn delete_message(
-    State(state): State<AppState>,
+    state: &AppState,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     Err(ApiError::NotImplemented)

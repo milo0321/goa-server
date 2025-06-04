@@ -18,7 +18,7 @@ impl QuotationModule {
 
 impl AppModule for QuotationModule {
     fn name(&self) -> &'static str {
-        "QuotationModule"
+        "quotations"
     }
 
     fn route(&self) -> Router<AppState> {

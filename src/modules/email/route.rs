@@ -6,6 +6,7 @@ use axum::{Router, routing::get};
 
 pub fn email_routes() -> Router<AppState> {
     resource_router(
+        "emails",
         get(list_accounts), // 自动处理提取器
         post(create_account),
         get(get_account),

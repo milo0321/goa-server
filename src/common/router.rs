@@ -1,41 +1,34 @@
-use axum::{Router, http::StatusCode, routing::MethodRouter};
+use axum::{Router, handler::Handler, routing::get};
 use tower_http::trace::TraceLayer;
+use tracing::Level;
 
-pub fn resource_router<S>(
-    list: MethodRouter<S>,
-    create: MethodRouter<S>,
-    retrieve: MethodRouter<S>,
-    update: MethodRouter<S>,
-    delete: MethodRouter<S>,
-) -> Router<S>
-where
-    S: Clone + Send + Sync + 'static,
-{
-    Router::new()
-        .route("/", list.post(create).options(|| async { StatusCode::OK }))
-        .route(
-            "/{id}",
-            retrieve
-                .put(update)
-                .delete(delete)
-                .options(|| async { StatusCode::OK }),
-        )
-        .layer(TraceLayer::new_for_http())
-}
-
-pub fn resource_router_with_prefix<S>(
+pub fn resource_router<T, S, ListF, CreateF, RetrieveF, UpdateF, DeleteF>(
     prefix: &str,
-    list: MethodRouter<S>,
-    create: MethodRouter<S>,
-    retrieve: MethodRouter<S>,
-    update: MethodRouter<S>,
-    delete: MethodRouter<S>,
+    list: ListF,
+    create: CreateF,
+    retrieve: RetrieveF,
+    update: UpdateF,
+    delete: DeleteF,
 ) -> Router<S>
 where
+    T: 'static,
     S: Clone + Send + Sync + 'static,
+    ListF: Handler<T, S>,
+    RetrieveF: Handler<T, S>,
+    CreateF: Handler<T, S>,
+    UpdateF: Handler<T, S>,
+    DeleteF: Handler<T, S>,
 {
-    Router::new().nest(
-        prefix,
-        resource_router(list, create, retrieve, update, delete),
-    )
+    let clean_prefix = prefix.trim_start_matches('/').trim_end_matches('/');
+    let base = format!("/{}", clean_prefix); // /customers
+    let detail = format!("/{}/{{id}}", clean_prefix); // /customers/{id}
+
+    Router::new()
+        .route(&base, get(list).post(create))
+        .route(&detail, get(retrieve).put(update).delete(delete))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(tower_http::trace::DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(tower_http::trace::DefaultOnResponse::new().level(Level::INFO)),
+        )
 }
