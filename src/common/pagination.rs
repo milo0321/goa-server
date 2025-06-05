@@ -27,6 +27,15 @@ impl<T> PaginatedResponse<T> {
         }
     }
 
+    pub fn empty(page: u32, limit: u32) -> Self {
+        Self {
+            data: Vec::new(),
+            page,
+            limit,
+            total: 0,
+        }
+    }
+
     pub fn _total_pages(&self) -> u32 {
         ((self.total as f64) / (self.limit as f64)).ceil() as u32
     }

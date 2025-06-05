@@ -1,7 +1,6 @@
 // repositories/repository.rs
 use super::model::*;
 use crate::{db::AppState, db::db_conn, error::ApiError};
-use axum::extract::{Path, State};
 use sqlx::types::Json;
 use uuid::Uuid;
 
@@ -93,7 +92,7 @@ pub async fn fetch_quotations(
 // 获取单个报价单
 pub async fn fetch_quotation_by_id(
     state: &AppState,
-    Path(quotation_id): Path<Uuid>,
+    quotation_id: Uuid,
 ) -> Result<Quotation, ApiError> {
     tracing::debug!("fetch_quotation_by_id: {:?}", quotation_id);
 
@@ -179,7 +178,7 @@ pub async fn insert_quotation(
 // 更新报价单
 pub async fn update_quotation(
     state: &AppState,
-    Path(quotation_id): Path<Uuid>,
+    quotation_id: Uuid,
     payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
     tracing::debug!("update_quotation {}: {:?}", quotation_id, payload);
@@ -254,10 +253,7 @@ pub async fn update_quotation(
 }
 
 // 删除报价单
-pub async fn delete_quotation(
-    state: &AppState,
-    Path(quotation_id): Path<Uuid>,
-) -> Result<(), ApiError> {
+pub async fn delete_quotation(state: &AppState, quotation_id: Uuid) -> Result<(), ApiError> {
     tracing::debug!("delete_quotation: {:?}", quotation_id);
     let query = "DELETE FROM quotations WHERE id = $1";
     sqlx::query(query)

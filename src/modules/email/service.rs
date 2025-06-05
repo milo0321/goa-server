@@ -1,32 +1,29 @@
 use super::model::*;
-use super::{repository, service};
-use sqlx::PgPool;
-use std::fs;
+use super::repository;
 
 use crate::error::ApiError;
 use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
     db::AppState,
 };
-use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use uuid::Uuid;
 
 pub async fn list_accounts(
-    state: &AppState,
+    state: AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailAccount>, ApiError> {
-    let response = repository::list_accounts(&state, params).await?;
+    let response = repository::list_accounts(state, params).await?;
     Ok(response)
 }
 
-pub async fn get_account(state: &AppState, Path(id): Path<Uuid>) -> Result<EmailAccount, ApiError> {
-    let response = repository::get_account(&state, Path(id)).await?;
+pub async fn get_account(state: AppState, id: Uuid) -> Result<EmailAccount, ApiError> {
+    let response = repository::get_account(&state, id).await?;
     Ok(response)
 }
 
 pub async fn create_account(
-    state: &AppState,
+    state: AppState,
     params: CreateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
     let response: EmailAccount = repository::create_account(&state, params).await?;
@@ -34,37 +31,34 @@ pub async fn create_account(
 }
 
 pub async fn update_account(
-    state: &AppState,
-    Path(id): Path<Uuid>,
+    state: AppState,
+    id: Uuid,
     params: UpdateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
-    let response = repository::update_account(&state, Path(id), params).await?;
+    let response = repository::update_account(&state, id, params).await?;
     Ok(response)
 }
 
-pub async fn delete_account(
-    state: &AppState,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
-    repository::delete_account(&state, Path(id)).await?;
+pub async fn delete_account(state: AppState, id: Uuid) -> Result<StatusCode, ApiError> {
+    repository::delete_account(&state, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn list_messages(
-    state: &AppState,
+    state: AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailMessage>, ApiError> {
     let response = repository::list_messages(&state, params).await?;
     Ok(response)
 }
 
-pub async fn get_message(state: &AppState, Path(id): Path<Uuid>) -> Result<EmailMessage, ApiError> {
-    let response = repository::get_message(&state, Path(id)).await?;
+pub async fn get_message(state: AppState, id: Uuid) -> Result<EmailMessage, ApiError> {
+    let response = repository::get_message(&state, id).await?;
     Ok(response)
 }
 
 pub async fn create_message(
-    state: &AppState,
+    state: AppState,
     params: CreateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
     let response: EmailMessage = repository::create_message(&state, params).await?;
@@ -72,19 +66,16 @@ pub async fn create_message(
 }
 
 pub async fn update_message(
-    state: &AppState,
-    Path(id): Path<Uuid>,
+    state: AppState,
+    id: Uuid,
     params: UpdateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
-    let response = repository::update_message(&state, Path(id), params).await?;
+    let response = repository::update_message(&state, id, params).await?;
     Ok(response)
 }
 
-pub async fn delete_message(
-    state: &AppState,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
-    repository::delete_message(&state, Path(id)).await?;
+pub async fn delete_message(state: AppState, id: Uuid) -> Result<StatusCode, ApiError> {
+    repository::delete_message(&state, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -128,14 +119,18 @@ pub async fn delete_message(
 //     Ok(())
 // }
 
-pub async fn fetch_emails(pool: &PgPool) {
-    // let configs = match repository::get_configs(pool).await {
-    //     Ok(list) => list,
-    //     Err(e) => {
-    //         tracing::error!("Fetch configs failed: {}", e);
-    //         return;
-    //     }
-    // };
+pub async fn fetch_emails(state: AppState) {
+    let param = PaginationParams {
+        page: Some(1),
+        limit: Some(100),
+    };
+    let accounts = match repository::list_accounts(state, param).await {
+        Ok(list) => list,
+        Err(e) => {
+            tracing::error!("Fetch configs failed: {}", e);
+            return;
+        }
+    };
     //
     // for config in configs {
     //     // 模拟从服务器拉邮件

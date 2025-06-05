@@ -32,7 +32,7 @@ pub async fn get_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<Json<Quotation>, ApiError> {
-    let quotation = service::get_quotation(&state, Path(quotation_id)).await?;
+    let quotation = service::get_quotation(&state, quotation_id).await?;
     Ok(Json(quotation))
 }
 
@@ -43,7 +43,7 @@ pub async fn update_quotation(
     Json(updated_quotation): Json<UpdateQuotation>,
 ) -> Result<Json<Quotation>, ApiError> {
     let updated_quotation =
-        service::update_quotation(&state, Path(quotation_id), updated_quotation).await?;
+        service::update_quotation(&state, quotation_id, updated_quotation).await?;
     Ok(Json(updated_quotation))
 }
 
@@ -52,7 +52,7 @@ pub async fn delete_quotation(
     State(state): State<AppState>,
     Path(quotation_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    service::delete_quotation(&state, Path(quotation_id)).await?;
+    service::delete_quotation(&state, quotation_id).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

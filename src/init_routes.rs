@@ -5,7 +5,6 @@ use axum::{
     body::Body,
     http::{Method, Request},
 };
-use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -14,8 +13,7 @@ use tower_http::{
 use tracing::Level;
 
 pub fn init_routes(state: AppState) -> (Router, Vec<JoinHandle<()>>) {
-    let db = Arc::clone(&state.db);
-    let (plugin_router, _tasks) = load_plugins(db); // 背景任务后面单独管理
+    let (plugin_router, _tasks) = load_plugins(state.clone()); // 背景任务后面单独管理
 
     let cors = CorsLayer::new()
         .allow_methods(vec![

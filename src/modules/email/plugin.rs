@@ -3,17 +3,15 @@ use crate::db::AppState;
 use crate::modules::email::service::fetch_emails;
 use crate::plugin::core::{AppModule, ModuleFactory};
 use axum::Router;
-use sqlx::PgPool;
-use std::sync::Arc;
 use tokio::task::JoinHandle;
 
 pub struct EmailModule {
-    db: Arc<PgPool>,
+    state: AppState,
 }
 
 impl EmailModule {
-    pub fn new(db: Arc<PgPool>) -> Self {
-        Self { db }
+    pub fn new(state: AppState) -> Self {
+        Self { state }
     }
 }
 
@@ -26,16 +24,17 @@ impl AppModule for EmailModule {
         route::email_routes()
     }
 
-    fn init(&self, _db: Arc<PgPool>) -> Option<JoinHandle<()>> {
+    fn init(&self) -> Option<JoinHandle<()>> {
         let interval = std::env::var("EMAIL_FETCH_INTERVAL_SECONDS")
             .unwrap_or_else(|_| "300".to_string())
             .parse::<u64>()
             .unwrap_or(300);
+        let state = self.state.clone();
         Some(tokio::spawn(async move {
             let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(interval));
             loop {
                 ticker.tick().await;
-                fetch_emails(&_db).await;
+                fetch_emails(state.clone()).await;
             }
         }))
     }
@@ -51,5 +50,5 @@ impl AppModule for EmailModule {
 }
 
 inventory::submit! {
-    ModuleFactory(|db| Box::new(EmailModule::new(db)))
+    ModuleFactory(|state| Box::new(EmailModule::new(state)))
 }

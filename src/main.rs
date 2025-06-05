@@ -35,7 +35,7 @@ async fn main() {
         .init();
 
     let db = init_db().await;
-    let (app, tasks) = init_routes::init_routes(db.clone());
+    let (app, tasks) = init_routes::init_routes(db);
 
     let port = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
     let addr: String = format!("0.0.0.0:{}", port).parse().unwrap();

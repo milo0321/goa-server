@@ -2,17 +2,15 @@ use super::route;
 use crate::db::AppState;
 use crate::plugin::core::{AppModule, ModuleFactory};
 use axum::Router;
-use sqlx::PgPool;
-use std::sync::Arc;
 use tokio::task::JoinHandle;
 
 pub struct CustomerModule {
-    db: Arc<PgPool>,
+    state: AppState,
 }
 
 impl CustomerModule {
-    pub fn new(db: Arc<PgPool>) -> Self {
-        Self { db }
+    pub fn new(state: AppState) -> Self {
+        Self { state }
     }
 }
 
@@ -25,7 +23,7 @@ impl AppModule for CustomerModule {
         route::customer_routes()
     }
 
-    fn init(&self, _db: Arc<PgPool>) -> Option<JoinHandle<()>> {
+    fn init(&self) -> Option<JoinHandle<()>> {
         None
     }
 
@@ -41,5 +39,5 @@ impl AppModule for CustomerModule {
 
 // 使用工厂函数的方式注册模块
 inventory::submit! {
-    ModuleFactory(|db| Box::new(CustomerModule::new(db)))
+    ModuleFactory(|state| Box::new(CustomerModule::new(state)))
 }
