@@ -1,6 +1,8 @@
-use axum::response::{IntoResponse, Response};
 // src/models/pagination.rs
-use axum::Json;
+use axum::{
+    Json,
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

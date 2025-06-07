@@ -62,27 +62,29 @@ impl IntoResponse for UpdateEmailAccount {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct EmailMessageFields {
-    pub id: i64,
-    pub config_id: i64,
-    pub subject: String,
-    pub sender: String,
-    pub received_at: DateTime<Utc>,
-    pub body: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct EmailMessage {
     pub id: i64,
-    #[serde(flatten)]
-    pub fields: EmailMessageFields,
+    pub subject: String,
+    pub from_address: String,
+    pub to_address: String,
+    pub received_at: DateTime<Utc>,
+    pub body: String,
 }
 
 impl IntoResponse for EmailMessage {
     fn into_response(self) -> Response {
         Json(self).into_response()
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EmailMessageFields {
+    pub config_id: i64,
+    pub subject: String,
+    pub sender: String,
+    pub received_at: DateTime<Utc>,
+    pub body: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
