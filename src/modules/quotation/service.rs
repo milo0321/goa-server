@@ -9,7 +9,7 @@ pub async fn list_quotations(
     state: &AppState,
     params: QuotationPaginationParams,
 ) -> Result<QuotationPaginatedResponse, ApiError> {
-    let response = repository::fetch_quotations(&state, params).await?;
+    let response = repo::fetch_quotations(&state, params).await?;
     Ok(response)
 }
 
@@ -18,13 +18,13 @@ pub async fn create_quotation(
     state: &AppState,
     payload: CreateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let created_quotation = repository::insert_quotation(&state, payload).await?;
+    let created_quotation = repo::insert_quotation(&state, payload).await?;
     Ok(created_quotation)
 }
 
 // 获取单个报价单详细信息
 pub async fn get_quotation(state: &AppState, quotation_id: Uuid) -> Result<Quotation, ApiError> {
-    let quotation = repository::fetch_quotation_by_id(&state, quotation_id).await?;
+    let quotation = repo::fetch_quotation_by_id(&state, quotation_id).await?;
     Ok(quotation)
 }
 
@@ -34,12 +34,12 @@ pub async fn update_quotation(
     quotation_id: Uuid,
     payload: UpdateQuotation,
 ) -> Result<Quotation, ApiError> {
-    let quotation = repository::update_quotation(&state, quotation_id, payload).await?;
+    let quotation = repo::update_quotation(&state, quotation_id, payload).await?;
     Ok(quotation)
 }
 
 // 删除报价单
 pub async fn delete_quotation(state: &AppState, quotation_id: Uuid) -> Result<(), ApiError> {
-    repository::delete_quotation(&state, quotation_id).await?;
+    repo::delete_quotation(&state, quotation_id).await?;
     Ok(())
 }

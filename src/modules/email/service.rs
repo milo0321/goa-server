@@ -1,5 +1,5 @@
 use super::model::*;
-use super::repository;
+use super::repo;
 
 use crate::error::ApiError;
 use crate::{
@@ -13,12 +13,12 @@ pub async fn list_accounts(
     state: AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailAccount>, ApiError> {
-    let response = repository::list_accounts(state, params).await?;
+    let response = repo::list_accounts(state, params).await?;
     Ok(response)
 }
 
 pub async fn get_account(state: AppState, id: Uuid) -> Result<EmailAccount, ApiError> {
-    let response = repository::get_account(&state, id).await?;
+    let response = repo::get_account(&state, id).await?;
     Ok(response)
 }
 
@@ -26,7 +26,7 @@ pub async fn create_account(
     state: AppState,
     params: CreateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
-    let response: EmailAccount = repository::create_account(&state, params).await?;
+    let response: EmailAccount = repo::create_account(&state, params).await?;
     Ok(response)
 }
 
@@ -35,12 +35,12 @@ pub async fn update_account(
     id: Uuid,
     params: UpdateEmailAccount,
 ) -> Result<EmailAccount, ApiError> {
-    let response = repository::update_account(&state, id, params).await?;
+    let response = repo::update_account(&state, id, params).await?;
     Ok(response)
 }
 
 pub async fn delete_account(state: AppState, id: Uuid) -> Result<StatusCode, ApiError> {
-    repository::delete_account(&state, id).await?;
+    repo::delete_account(&state, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -48,12 +48,12 @@ pub async fn list_messages(
     state: AppState,
     params: PaginationParams,
 ) -> Result<PaginatedResponse<EmailMessage>, ApiError> {
-    let response = repository::list_messages(&state, params).await?;
+    let response = repo::list_messages(&state, params).await?;
     Ok(response)
 }
 
 pub async fn get_message(state: AppState, id: Uuid) -> Result<EmailMessage, ApiError> {
-    let response = repository::get_message(&state, id).await?;
+    let response = repo::get_message(&state, id).await?;
     Ok(response)
 }
 
@@ -61,7 +61,7 @@ pub async fn create_message(
     state: AppState,
     params: CreateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
-    let response: EmailMessage = repository::create_message(&state, params).await?;
+    let response: EmailMessage = repo::create_message(&state, params).await?;
     Ok(response)
 }
 
@@ -70,12 +70,12 @@ pub async fn update_message(
     id: Uuid,
     params: UpdateEmailMessage,
 ) -> Result<EmailMessage, ApiError> {
-    let response = repository::update_message(&state, id, params).await?;
+    let response = repo::update_message(&state, id, params).await?;
     Ok(response)
 }
 
 pub async fn delete_message(state: AppState, id: Uuid) -> Result<StatusCode, ApiError> {
-    repository::delete_message(&state, id).await?;
+    repo::delete_message(&state, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -124,7 +124,7 @@ pub async fn fetch_emails(state: AppState) {
         page: Some(1),
         limit: Some(100),
     };
-    let accounts = match repository::list_accounts(state, param).await {
+    let accounts = match repo::list_accounts(state, param).await {
         Ok(list) => list,
         Err(e) => {
             tracing::error!("Fetch configs failed: {}", e);

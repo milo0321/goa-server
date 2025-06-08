@@ -1,4 +1,4 @@
-// repositories/repository.rs
+// repositories/repo
 use super::model::*;
 use crate::{db::AppState, db::db_conn, error::ApiError};
 use sqlx::types::Json;

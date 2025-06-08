@@ -1,11 +1,10 @@
-use super::model::{CreateCustomer, Customer, UpdateCustomer};
+use super::model::*;
 use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
-    db::AppState,
     db::db_conn,
+    db::AppState,
     error::ApiError,
 };
-use axum::extract::Path;
 use uuid::Uuid;
 
 pub async fn list_customers(
@@ -29,16 +28,19 @@ pub async fn list_customers(
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| ApiError::DatabaseError(e))?;
+    if total == 0 {
+        return Ok(PaginatedResponse::empty(page, limit));
+    }
 
     // Fetch paginated customers
     let customers = sqlx::query_as::<_, Customer>(
         "SELECT * FROM customers ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
-    .bind(limit as i64)
-    .bind(offset as i64)
-    .fetch_all(db_conn(&state))
-    .await
-    .map_err(|e| ApiError::DatabaseError(e))?;
+        .bind(limit as i64)
+        .bind(offset as i64)
+        .fetch_all(db_conn(&state))
+        .await
+        .map_err(|e| ApiError::DatabaseError(e))?;
 
     Ok(PaginatedResponse {
         data: customers,
@@ -48,7 +50,7 @@ pub async fn list_customers(
     })
 }
 
-pub async fn get_customer(state: &AppState, Path(id): Path<Uuid>) -> Result<Customer, ApiError> {
+pub async fn get_customer(state: &AppState, id: Uuid) -> Result<Customer, ApiError> {
     let sql = r#"
         SELECT * FROM customers WHERE id = $1
         "#;

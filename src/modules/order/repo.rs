@@ -1,6 +1,5 @@
 use super::model::*;
 use crate::{common::pagination::PaginatedResponse, db::AppState, db::db_conn, error::ApiError};
-use sqlx::types::Json;
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -106,31 +105,27 @@ pub async fn get_order(state: &AppState, order_id: Uuid) -> Result<Order, ApiErr
 }
 
 // 创建报价单
-pub async fn insert_order(state: &AppState, payload: CreateOrder) -> Result<Order, ApiError> {
-    tracing::debug!("insert_order: {:?}", payload);
+pub async fn insert_order(state: &AppState, create_order: CreateOrder) -> Result<Order, ApiError> {
+    tracing::debug!("insert_order: {:?}", create_order);
 
     // 1. 用 CTE 插入新行，并在同一个 SQL 里 LEFT JOIN customers
     let sql = r#"
         WITH new_row AS (
             INSERT INTO orders (
+                order_number,
                 customer_id,
+                customer_order_number,
                 article,
-                client,
-                size,
-                material,
-                color,
-                details,
-                branding,
-                packing,
                 quantity,
-                certifications,
-                price,
-                extra_cost,
+                unit_price,
+                currency,
+                costs,
+                packing_details,
                 notes,
                 status,
-                inquiry_date
+                order_date
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
             )
             RETURNING *
         )
@@ -141,22 +136,18 @@ pub async fn insert_order(state: &AppState, payload: CreateOrder) -> Result<Orde
 
     // 2. 绑定参数并执行
     let inserted: Order = sqlx::query_as::<_, Order>(sql)
-        .bind(payload.customer_id) // $1
-        .bind(&payload.article) // $2
-        .bind(&payload.client) // $3
-        .bind(&payload.size) // $4
-        .bind(&payload.material) // $5
-        .bind(&payload.color) // $6
-        .bind(&payload.details) // $7
-        .bind(&payload.branding) // $8
-        .bind(&payload.packing) // $9
-        .bind(&payload.quantity) // $10
-        .bind(&payload.certifications) // $11
-        .bind(&payload.price) // $12
-        .bind(&payload.extra_cost) // $13
-        .bind(&payload.notes) // $14
-        .bind(&payload.status) // $15
-        .bind(&payload.inquiry_date) // $16
+        .bind(&create_order.order_number) // $1
+        .bind(&create_order.customer_id) // $2
+        .bind(&create_order.customer_order_number) // $3
+        .bind(&create_order.article) // $4
+        .bind(&create_order.quantity) // $5
+        .bind(&create_order.unit_price) // $6
+        .bind(&create_order.currency) // $7
+        .bind(&create_order.costs) // $8
+        .bind(&create_order.packing_details) // $9
+        .bind(&create_order.notes) // $10
+        .bind(&create_order.status) // $11
+        .bind(&create_order.order_date) // $12
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| {
@@ -172,37 +163,28 @@ pub async fn insert_order(state: &AppState, payload: CreateOrder) -> Result<Orde
 pub async fn update_order(
     state: &AppState,
     order_id: Uuid,
-    payload: UpdateOrder,
+    update_order: UpdateOrder,
 ) -> Result<Order, ApiError> {
-    tracing::debug!("update_order {}: {:?}", order_id, payload);
+    tracing::debug!("update_order {}: {:?}", order_id, update_order);
 
     let sql = r#"
          WITH updated_row AS (
             UPDATE orders
             SET
-                customer_id     = $1,
-                article         = $2,
-                client          = $3,
-                size            = $4,
-                material        = $5,
-                color           = $6,
-                details         = $7,
-                branding        = $8,
-                packing         = $9,
-                quantity        = $10,
-                certifications  = $11,
-                price           = $12,
-                extra_cost      = $13,
-                notes           = $14,
-                status          = $15,
-                inquiry_date    = COALESCE($16, inquiry_date),
-                sample_time     = $17,
-                mass_time       = $18,
-                quote_prices    = $19,
-                additional_fees = $20,
-                packing_details = $21,
-                updated_at      = now()
-            WHERE id = $22
+                order_number            = $1,
+                customer_id             = $2,
+                customer_order_number   = $3,
+                article                 = $4,
+                quantity                = $5,
+                unit_price              = $6,
+                currency                = $7,
+                costs                   = $8,
+                packing_details         = $9,
+                notes                   = $10,
+                status                  = $11,
+                order_date              = COALESCE($12, inquiry_date),
+                updated_at              = now()
+            WHERE id = $13
             RETURNING *
         )
         SELECT r.*, c.name AS customer_name
@@ -212,28 +194,19 @@ pub async fn update_order(
 
     // 2. 绑定参数并执行
     let updated: Order = sqlx::query_as::<_, Order>(sql)
-        .bind(payload.customer_id) // $1
-        .bind(&payload.article) // $2
-        .bind(&payload.client) // $3
-        .bind(&payload.size) // $4
-        .bind(&payload.material) // $5
-        .bind(&payload.color) // $6
-        .bind(&payload.details) // $7
-        .bind(&payload.branding) // $8
-        .bind(&payload.packing) // $9
-        .bind(&payload.quantity) // $10
-        .bind(&payload.certifications) // $11
-        .bind(&payload.price) // $12
-        .bind(&payload.extra_cost) // $13
-        .bind(&payload.notes) // $14
-        .bind(&payload.status) // $15
-        .bind(&payload.inquiry_date) // $16
-        .bind(payload.sample_time.map(Json)) // $17
-        .bind(payload.mass_time.map(Json)) // $18
-        .bind(payload.quote_prices.map(Json)) // $19
-        .bind(payload.additional_fees.map(Json)) // $20
-        .bind(payload.packing_details.map(Json)) // $21
-        .bind(order_id) // $22
+        .bind(update_order.order_number) // $1
+        .bind(&update_order.customer_id) // $2
+        .bind(&update_order.customer_order_number) // $3
+        .bind(&update_order.article) // $4
+        .bind(&update_order.quantity) // $5
+        .bind(&update_order.unit_price) // $6
+        .bind(&update_order.currency) // $7
+        .bind(&update_order.costs) // $8
+        .bind(&update_order.packing_details) // $9
+        .bind(&update_order.notes) // $10
+        .bind(&update_order.status) // $11
+        .bind(&update_order.order_date) // $12
+        .bind(order_id) // $13
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| {

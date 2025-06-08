@@ -23,16 +23,17 @@ pub struct Cost {
 #[serde(rename_all = "camelCase")]
 pub struct Order {
     pub id: Uuid,
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub order_date: DateTime<Utc>, // 新增字段
+    pub order_number: String,
     pub customer_id: Uuid,
-    pub customer_name: String,
+    pub customer_order_number: String,
+    pub quotation_id: Option<Uuid>,
     pub article: String,
     pub quantity: i32,
     pub unit_price: f64,
     pub currency: Option<String>,
     pub costs: Option<Json<Vec<Cost>>>,
     pub packing_details: Option<Json<Vec<PackingDetail>>>,
+    pub order_date: DateTime<Utc>, // 新增字段
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -46,12 +47,19 @@ impl IntoResponse for Order {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOrder {
-    pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
-    pub company: Option<String>,
-    pub position: Option<String>,
-    pub address: Option<String>,
+    pub order_number: String,
+    pub customer_id: Uuid,
+    pub customer_order_number: String,
+    pub quotation_id: Option<Uuid>,
+    pub article: String,
+    pub quantity: i32,
+    pub unit_price: f64,
+    pub currency: Option<String>,
+    pub costs: Option<Json<Vec<Cost>>>,
+    pub packing_details: Option<Json<Vec<PackingDetail>>>,
+    pub status: Option<String>,
+    pub notes: Option<String>,
+    pub order_date: DateTime<Utc>,
 }
 
 impl IntoResponse for CreateOrder {
@@ -60,22 +68,7 @@ impl IntoResponse for CreateOrder {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateOrder {
-    pub name: Option<String>,
-    pub email: Option<String>,
-    pub phone: Option<String>,
-    pub company: Option<String>,
-    pub position: Option<String>,
-    pub address: Option<String>,
-}
-
-impl IntoResponse for UpdateOrder {
-    fn into_response(self) -> Response {
-        axum::Json(self).into_response()
-    }
-}
+pub type UpdateOrder = CreateOrder;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
