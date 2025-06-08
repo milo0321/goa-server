@@ -1,7 +1,12 @@
 // repositories/repo
 use super::model::*;
-use crate::common::pagination::PaginatedResponse;
-use crate::{db::db_conn, db::AppState, error::ApiError};
+use crate::{
+    common::pagination::PaginatedResponse,
+    db::db_conn,
+    db::AppState,
+    define_repo_delete_fn,
+    error::ApiError,
+};
 use sqlx::types::Json;
 use uuid::Uuid;
 
@@ -253,17 +258,4 @@ pub async fn update_quotation(
 }
 
 // 删除报价单
-pub async fn delete_quotation(state: &AppState, quotation_id: Uuid) -> Result<(), ApiError> {
-    tracing::debug!("delete_quotation: {:?}", quotation_id);
-    let query = "DELETE FROM quotations WHERE id = $1";
-    sqlx::query(query)
-        .bind(quotation_id)
-        .execute(db_conn(&state))
-        .await
-        .map_err(|e| {
-            tracing::error!("delete_quotation failed: {}\nSQL: {}", e, query);
-            ApiError::DatabaseError(e)
-        })?;
-
-    Ok(())
-}
+define_repo_delete_fn!(delete_quotation, "quotations");

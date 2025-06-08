@@ -1,5 +1,11 @@
 use super::model::*;
-use crate::{common::pagination::PaginatedResponse, db::db_conn, db::AppState, error::ApiError};
+use crate::{
+    common::pagination::PaginatedResponse,
+    db::db_conn,
+    db::AppState,
+    define_repo_delete_fn,
+    error::ApiError,
+};
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -48,7 +54,7 @@ pub async fn list_orders(
     if total == 0 {
         return Ok(PaginatedResponse::empty(page, limit));
     }
-    
+
     // 获取报价单列表
     let query_str = format!(
         "SELECT q.*, c.id as customer_id, c.name as customer_name
@@ -218,17 +224,4 @@ pub async fn update_order(
 }
 
 // 删除报价单
-pub async fn delete_order(state: &AppState, order_id: Uuid) -> Result<(), ApiError> {
-    tracing::debug!("delete_order: {:?}", order_id);
-    let query = "DELETE FROM orders WHERE id = $1";
-    sqlx::query(query)
-        .bind(order_id)
-        .execute(db_conn(&state))
-        .await
-        .map_err(|e| {
-            tracing::error!("delete_order failed: {}\nSQL: {}", e, query);
-            ApiError::DatabaseError(e)
-        })?;
-
-    Ok(())
-}
+define_repo_delete_fn!(delete_order, "orders");

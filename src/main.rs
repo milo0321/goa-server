@@ -2,6 +2,7 @@ use db::init_db;
 use dotenvy::dotenv;
 use std::env;
 
+#[macro_use]
 mod common;
 mod config;
 mod db;

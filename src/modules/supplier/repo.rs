@@ -3,6 +3,7 @@ use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
     db::db_conn,
     db::AppState,
+    define_repo_delete_fn,
     error::ApiError,
 };
 use axum::extract::Path;
@@ -34,9 +35,8 @@ pub async fn list_suppliers(
     }
 
     // Fetch paginated suppliers
-    let suppliers = sqlx::query_as::<_, Supplier>(
-        "SELECT * FROM suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-    )
+    let sql = "SELECT * FROM suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2";
+    let suppliers = sqlx::query_as::<_, Supplier>(sql)
         .bind(limit as i64)
         .bind(offset as i64)
         .fetch_all(db_conn(&state))
@@ -131,16 +131,4 @@ pub async fn update_supplier(
     Ok(supplier)
 }
 
-pub async fn delete_supplier(state: &AppState, id: Uuid) -> Result<(), ApiError> {
-    let sql = "DELETE FROM suppliers WHERE id = $1";
-    sqlx::query(sql)
-        .bind(id)
-        .execute(db_conn(&state))
-        .await
-        .map_err(|e| {
-            tracing::error!("delete_quotation failed: {}\nSQL: {}", e, sql);
-            ApiError::DatabaseError(e)
-        })?;
-
-    Ok(())
-}
+define_repo_delete_fn!(delete_supplier, "suppliers");

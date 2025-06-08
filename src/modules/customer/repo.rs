@@ -3,6 +3,7 @@ use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
     db::db_conn,
     db::AppState,
+    define_repo_delete_fn,
     error::ApiError,
 };
 use uuid::Uuid;
@@ -33,9 +34,8 @@ pub async fn list_customers(
     }
 
     // Fetch paginated customers
-    let customers = sqlx::query_as::<_, Customer>(
-        "SELECT * FROM customers ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-    )
+    let sql = r#"SELECT * FROM customers ORDER BY created_at DESC LIMIT $1 OFFSET $2"#;
+    let customers = sqlx::query_as::<_, Customer>(sql)
         .bind(limit as i64)
         .bind(offset as i64)
         .fetch_all(db_conn(&state))
@@ -130,16 +130,4 @@ pub async fn update_customer(
     Ok(customer)
 }
 
-pub async fn delete_customer(state: &AppState, id: Uuid) -> Result<(), ApiError> {
-    let sql = "DELETE FROM customers WHERE id = $1";
-    sqlx::query(sql)
-        .bind(id)
-        .execute(db_conn(&state))
-        .await
-        .map_err(|e| {
-            tracing::error!("delete_quotation failed: {}\nSQL: {}", e, sql);
-            ApiError::DatabaseError(e)
-        })?;
-
-    Ok(())
-}
+define_repo_delete_fn!(delete_customer, "customers");
