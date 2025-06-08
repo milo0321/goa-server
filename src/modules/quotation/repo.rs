@@ -1,6 +1,7 @@
 // repositories/repo
 use super::model::*;
-use crate::{db::AppState, db::db_conn, error::ApiError};
+use crate::common::pagination::PaginatedResponse;
+use crate::{db::db_conn, db::AppState, error::ApiError};
 use sqlx::types::Json;
 use uuid::Uuid;
 
@@ -54,6 +55,15 @@ pub async fn fetch_quotations(
     );
 
     tracing::debug!(query_str);
+    // 获取总数
+    let count_query = format!("SELECT COUNT(*) FROM quotations q {}", where_clause);
+    tracing::debug!(count_query);
+    let total: i64 = sqlx::query_scalar(&count_query)
+        .fetch_one(db_conn(&state))
+        .await?;
+    if total == 0 {
+        return Ok(PaginatedResponse::empty(page, limit));
+    }
 
     let mut query = sqlx::query_as::<_, Quotation>(&query_str);
     // 按实际存在的参数顺序绑定（与占位符顺序严格一致）
@@ -69,17 +79,7 @@ pub async fn fetch_quotations(
         query = query.bind(format!("%{}%", search_query)); // 绑定 String
     }
 
-    // 获取总数
-    let count_query = format!("SELECT COUNT(*) FROM quotations q {}", where_clause);
-    tracing::debug!(count_query);
-    let total: i64 = sqlx::query_scalar(&count_query)
-        .fetch_one(db_conn(&state))
-        .await?;
-
-    let mut quotations = Vec::new();
-    if total > 0 {
-        quotations = query.fetch_all(db_conn(&state)).await?;
-    }
+    let quotations = query.fetch_all(db_conn(&state)).await?;
 
     Ok(QuotationPaginatedResponse {
         data: quotations,

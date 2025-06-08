@@ -1,5 +1,5 @@
 use super::model::*;
-use crate::{common::pagination::PaginatedResponse, db::AppState, db::db_conn, error::ApiError};
+use crate::{common::pagination::PaginatedResponse, db::db_conn, db::AppState, error::ApiError};
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -39,7 +39,16 @@ pub async fn list_orders(
         format!("WHERE {}", conditions.join(" AND "))
     };
 
-    // 获取报价单列表
+    // 获取总数
+    let count_query = format!("SELECT COUNT(*) FROM orders q {}", where_clause);
+    tracing::debug!(count_query);
+    let total: i64 = sqlx::query_scalar(&count_query)
+        .fetch_one(db_conn(&state))
+        .await?;
+    if total == 0 {
+        return Ok(PaginatedResponse::empty(page, limit));
+    }
+    
     // 获取报价单列表
     let query_str = format!(
         "SELECT q.*, c.id as customer_id, c.name as customer_name
@@ -67,17 +76,7 @@ pub async fn list_orders(
         query = query.bind(format!("%{}%", search_query)); // 绑定 String
     }
 
-    // 获取总数
-    let count_query = format!("SELECT COUNT(*) FROM orders q {}", where_clause);
-    tracing::debug!(count_query);
-    let total: i64 = sqlx::query_scalar(&count_query)
-        .fetch_one(db_conn(&state))
-        .await?;
-
-    let mut orders = Vec::new();
-    if total > 0 {
-        orders = query.fetch_all(db_conn(&state)).await?;
-    }
+    let orders = query.fetch_all(db_conn(&state)).await?;
 
     Ok(PaginatedResponse {
         data: orders,

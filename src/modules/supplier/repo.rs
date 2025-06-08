@@ -1,8 +1,8 @@
 use super::model::*;
 use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
-    db::AppState,
     db::db_conn,
+    db::AppState,
     error::ApiError,
 };
 use axum::extract::Path;
@@ -25,20 +25,23 @@ pub async fn list_suppliers(
     let offset = (page - 1) * limit;
 
     // Get total count of suppliers
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM suppliers ORDER BY created_at DESC")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM suppliers")
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| ApiError::DatabaseError(e))?;
+    if total == 0 {
+        return Ok(PaginatedResponse::empty(page, limit));
+    }
 
     // Fetch paginated suppliers
     let suppliers = sqlx::query_as::<_, Supplier>(
         "SELECT * FROM suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
-    .bind(limit as i64)
-    .bind(offset as i64)
-    .fetch_all(db_conn(&state))
-    .await
-    .map_err(|e| ApiError::DatabaseError(e))?;
+        .bind(limit as i64)
+        .bind(offset as i64)
+        .fetch_all(db_conn(&state))
+        .await
+        .map_err(|e| ApiError::DatabaseError(e))?;
 
     Ok(PaginatedResponse {
         data: suppliers,

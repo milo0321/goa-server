@@ -24,7 +24,7 @@ pub async fn list_customers(
     let offset = (page - 1) * limit;
 
     // Get total count of customers
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM customers ORDER BY created_at DESC")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM customers")
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| ApiError::DatabaseError(e))?;
