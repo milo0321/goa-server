@@ -1,9 +1,6 @@
 use super::model::*;
 use crate::{
-    common::pagination::PaginatedResponse,
-    db::db_conn,
-    db::AppState,
-    define_repo_delete_fn,
+    common::pagination::PaginatedResponse, db::AppState, db::db_conn, define_repo_delete_fn,
     error::ApiError,
 };
 use uuid::Uuid;
@@ -117,17 +114,17 @@ pub async fn insert_order(state: &AppState, create_order: CreateOrder) -> Result
     let sql = r#"
         WITH new_row AS (
             INSERT INTO orders (
-                order_number,
+                order_no,
+                order_article,
                 customer_id,
-                customer_order_number,
-                article,
-                quantity,
-                unit_price,
+                customer_order_no,
                 currency,
-                costs,
+                payment_terms,
+                delivery_time,
+                shipping_method,
                 packing_details,
-                notes,
                 status,
+                remarks,
                 order_date
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
@@ -141,17 +138,17 @@ pub async fn insert_order(state: &AppState, create_order: CreateOrder) -> Result
 
     // 2. 绑定参数并执行
     let inserted: Order = sqlx::query_as::<_, Order>(sql)
-        .bind(&create_order.order_number) // $1
-        .bind(&create_order.customer_id) // $2
-        .bind(&create_order.customer_order_number) // $3
-        .bind(&create_order.article) // $4
-        .bind(&create_order.quantity) // $5
-        .bind(&create_order.unit_price) // $6
-        .bind(&create_order.currency) // $7
-        .bind(&create_order.costs) // $8
+        .bind(&create_order.order_no) // $1
+        .bind(&create_order.order_article) // $2
+        .bind(&create_order.customer_id) // $3
+        .bind(&create_order.customer_order_no) // $4
+        .bind(&create_order.currency) // $5
+        .bind(&create_order.payment_terms) // $6
+        .bind(&create_order.delivery_time) // $7
+        .bind(&create_order.shipping_method) // $8
         .bind(&create_order.packing_details) // $9
-        .bind(&create_order.notes) // $10
-        .bind(&create_order.status) // $11
+        .bind(&create_order.status) // $10
+        .bind(&create_order.remarks) // $11
         .bind(&create_order.order_date) // $12
         .fetch_one(db_conn(&state))
         .await
@@ -176,17 +173,17 @@ pub async fn update_order(
          WITH updated_row AS (
             UPDATE orders
             SET
-                order_number            = $1,
-                customer_id             = $2,
-                customer_order_number   = $3,
-                article                 = $4,
-                quantity                = $5,
-                unit_price              = $6,
-                currency                = $7,
-                costs                   = $8,
+                order_no                = $1,
+                order_article           = $2,
+                customer_id             = $3,
+                customer_order_no       = $4,
+                currency                = $5,
+                payment_terms           = $6,
+                delivery_time           = $7,
+                shipping_method         = $8,
                 packing_details         = $9,
-                notes                   = $10,
-                status                  = $11,
+                status                  = $10,
+                remarks                 = $11,
                 order_date              = COALESCE($12, inquiry_date),
                 updated_at              = now()
             WHERE id = $13
@@ -199,17 +196,17 @@ pub async fn update_order(
 
     // 2. 绑定参数并执行
     let updated: Order = sqlx::query_as::<_, Order>(sql)
-        .bind(update_order.order_number) // $1
-        .bind(&update_order.customer_id) // $2
-        .bind(&update_order.customer_order_number) // $3
-        .bind(&update_order.article) // $4
-        .bind(&update_order.quantity) // $5
-        .bind(&update_order.unit_price) // $6
-        .bind(&update_order.currency) // $7
-        .bind(&update_order.costs) // $8
+        .bind(&update_order.order_no) // $1
+        .bind(&update_order.order_article) // $2
+        .bind(&update_order.customer_id) // $3
+        .bind(&update_order.customer_order_no) // $4
+        .bind(&update_order.currency) // $5
+        .bind(&update_order.payment_terms) // $6
+        .bind(&update_order.delivery_time) // $7
+        .bind(&update_order.shipping_method) // $8
         .bind(&update_order.packing_details) // $9
-        .bind(&update_order.notes) // $10
-        .bind(&update_order.status) // $11
+        .bind(&update_order.status) // $10
+        .bind(&update_order.remarks) // $11
         .bind(&update_order.order_date) // $12
         .bind(order_id) // $13
         .fetch_one(db_conn(&state))

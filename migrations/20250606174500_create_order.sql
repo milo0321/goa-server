@@ -3,9 +3,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE orders
 (
     id                    UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    order_number          TEXT        NOT NULL,
+    order_no              TEXT        NOT NULL,
     customer_id           UUID        NOT NULL REFERENCES customers (id) ON DELETE CASCADE,
-    customer_order_number TEXT        NOT NULL,
+    customer_order_no     TEXT        NOT NULL,
     quotation_id          UUID REFERENCES quotations (id),
     article               TEXT        NOT NULL,
     quantity              INTEGER     NOT NULL,

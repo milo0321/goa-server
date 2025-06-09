@@ -7,15 +7,17 @@ use crate::{
 };
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use uuid::Uuid;
 
 pub async fn list_invoices(
     State(state): State<AppState>,
-    params: axum::extract::Query<PaginationParams>,
+    Query(params): Query<PaginationParams>,
 ) -> Result<Json<PaginatedResponse<Invoice>>, ApiError> {
-    let result = InvoiceService::list(&state, params.0).await?;
+    let service = InvoiceService::from_state(&state);
+    let result = service.list(params).await?;
+
     Ok(Json(result))
 }
 
@@ -23,7 +25,9 @@ pub async fn get_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<InvoiceDetail>, ApiError> {
-    let invoice = InvoiceService::get(&state, id).await?;
+    let service = InvoiceService::from_state(&state);
+    let invoice = service.get(id).await?;
+
     Ok(Json(invoice))
 }
 
@@ -31,7 +35,9 @@ pub async fn create_invoice(
     State(state): State<AppState>,
     Json(params): Json<CreateInvoice>,
 ) -> Result<Json<Invoice>, ApiError> {
-    let invoice = InvoiceService::create(&state, params).await?;
+    let service = InvoiceService::from_state(&state);
+    let invoice = service.create(params).await?;
+
     Ok(Json(invoice))
 }
 
@@ -40,7 +46,9 @@ pub async fn update_invoice(
     Path(id): Path<Uuid>,
     Json(params): Json<UpdateInvoice>,
 ) -> Result<Json<Invoice>, ApiError> {
-    let invoice = InvoiceService::update(&state, id, params).await?;
+    let service = InvoiceService::from_state(&state);
+    let invoice = service.update(id, params).await?;
+
     Ok(Json(invoice))
 }
 
@@ -48,5 +56,6 @@ pub async fn delete_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<(), ApiError> {
-    InvoiceService::delete(&state, id).await
+    let service = InvoiceService::from_state(&state);
+    service.delete(id).await
 }

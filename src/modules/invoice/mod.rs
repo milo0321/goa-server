@@ -1,5 +1,5 @@
 mod controller;
-mod model;
+pub mod model;
 mod plugin;
 mod repo;
 mod route;

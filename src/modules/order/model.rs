@@ -23,17 +23,52 @@ pub struct Cost {
 #[serde(rename_all = "camelCase")]
 pub struct Order {
     pub id: Uuid,
-    pub order_number: String,
+    pub order_no: String,
+    pub order_article: String,
     pub customer_id: Uuid,
-    pub customer_order_number: String,
-    pub quotation_id: Option<Uuid>,
+    pub customer_order_no: String,
+    pub customer_name: String,
+    pub currency: String,
+    pub payment_terms: String,
+    pub delivery_time: DateTime<Utc>,
+    pub shipping_method: String,
+    pub remarks: Option<String>,
+    pub status: Option<String>,
+    pub packing_details: Option<Json<Vec<PackingDetail>>>,
+    pub order_date: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrderItem {
+    pub id: Uuid,
+    pub order_id: Uuid,
+    pub item_no: String,
     pub article: String,
     pub quantity: i32,
+    pub unit: String,
     pub unit_price: f64,
-    pub currency: Option<String>,
-    pub costs: Option<Json<Vec<Cost>>>,
-    pub packing_details: Option<Json<Vec<PackingDetail>>>,
-    pub order_date: DateTime<Utc>, // 新增字段
+    pub vat_rate: f64,
+    pub subtotal: f64,
+    pub vat_amount: f64,
+    pub total: f64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CostItem {
+    pub id: Uuid,
+    pub order_id: Uuid,
+    pub component_name: String,
+    pub component_type: String, // e.g. "Material", "Molding", "Shipping"
+    pub quantity: f64,
+    pub unit: String,
+    pub unit_cost: f64,
+    pub total_cost: f64,
+    pub supplier_id: Option<Uuid>,
+    pub remarks: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -47,18 +82,17 @@ impl IntoResponse for Order {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOrder {
-    pub order_number: String,
+    pub order_no: String,
+    pub order_article: String,
     pub customer_id: Uuid,
-    pub customer_order_number: String,
-    pub quotation_id: Option<Uuid>,
-    pub article: String,
-    pub quantity: i32,
-    pub unit_price: f64,
-    pub currency: Option<String>,
-    pub costs: Option<Json<Vec<Cost>>>,
-    pub packing_details: Option<Json<Vec<PackingDetail>>>,
+    pub customer_order_no: String,
+    pub currency: String,
+    pub payment_terms: String,
+    pub delivery_time: DateTime<Utc>,
+    pub shipping_method: String,
+    pub remarks: Option<String>,
     pub status: Option<String>,
-    pub notes: Option<String>,
+    pub packing_details: Option<Json<Vec<PackingDetail>>>,
     pub order_date: DateTime<Utc>,
 }
 

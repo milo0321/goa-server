@@ -11,7 +11,11 @@ macro_rules! define_repo_delete_fn {
                 .execute(crate::db::db_conn(state))
                 .await
                 .map_err(|e| {
-                    tracing::error!(concat!(stringify!($fn_name), " failed: {}\nSQL: {}"), e, sql);
+                    tracing::error!(
+                        concat!(stringify!($fn_name), " failed: {}\nSQL: {}"),
+                        e,
+                        sql
+                    );
                     crate::error::ApiError::DatabaseError(e)
                 })?;
             Ok(())

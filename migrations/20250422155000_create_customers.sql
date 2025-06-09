@@ -1,4 +1,4 @@
--- 20250422155000_create_customers_table.sql
+-- 20250422155000_create_customers.sql
 
 CREATE TABLE IF NOT EXISTS customers
 (

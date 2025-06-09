@@ -1,8 +1,8 @@
 use super::model::*;
 use crate::{
     common::pagination::{PaginatedResponse, PaginationParams},
-    db::db_conn,
     db::AppState,
+    db::db_conn,
     define_repo_delete_fn,
     error::ApiError,
 };

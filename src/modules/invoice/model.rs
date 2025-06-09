@@ -7,11 +7,11 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow, Type)]
 pub struct Invoice {
     pub id: Uuid,
-    pub invoice_number: String,
+    pub invoice_no: String,
+    pub invoice_type: String,
     pub customer_id: String,
     pub total_amount: f64,
     pub currency: String,
-    pub invoice_type: String,
     pub status: String,
     pub issue_date: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -21,7 +21,7 @@ pub struct Invoice {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateInvoice {
-    pub invoice_number: String,
+    pub invoice_no: String,
     pub invoice_type: String,
     pub customer_id: String,
     pub total_amount: f64,

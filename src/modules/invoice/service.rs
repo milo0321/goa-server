@@ -7,33 +7,38 @@ use crate::{
 };
 use uuid::Uuid;
 
-pub struct InvoiceService;
+pub struct InvoiceService {
+    pub repo: InvoiceRepo,
+}
 
 impl InvoiceService {
+    pub fn from_state(state: &AppState) -> Self {
+        Self {
+            repo: InvoiceRepo {
+                db: state.db.clone(),
+            },
+        }
+    }
     pub async fn list(
-        state: &AppState,
+        &self,
         params: PaginationParams,
     ) -> Result<PaginatedResponse<Invoice>, ApiError> {
-        InvoiceRepo::list(state, params).await
+        self.repo.list(params).await
     }
 
-    pub async fn get(state: &AppState, id: Uuid) -> Result<InvoiceDetail, ApiError> {
-        InvoiceRepo::get(state, id).await
+    pub async fn get(&self, id: Uuid) -> Result<InvoiceDetail, ApiError> {
+        self.repo.get(id).await
     }
 
-    pub async fn create(state: &AppState, params: CreateInvoice) -> Result<Invoice, ApiError> {
-        InvoiceRepo::create(state, params).await
+    pub async fn create(&self, params: CreateInvoice) -> Result<Invoice, ApiError> {
+        self.repo.create(params).await
     }
 
-    pub async fn update(
-        state: &AppState,
-        id: Uuid,
-        params: UpdateInvoice,
-    ) -> Result<Invoice, ApiError> {
-        InvoiceRepo::update(state, id, params).await
+    pub async fn update(&self, id: Uuid, params: UpdateInvoice) -> Result<Invoice, ApiError> {
+        self.repo.update(id, params).await
     }
 
-    pub async fn delete(state: &AppState, id: Uuid) -> Result<(), ApiError> {
-        InvoiceRepo::delete(state, id).await
+    pub async fn delete(&self, id: Uuid) -> Result<(), ApiError> {
+        self.repo.delete(id).await
     }
 }
