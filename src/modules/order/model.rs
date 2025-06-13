@@ -4,8 +4,7 @@ use axum::response::{IntoResponse, Response};
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use sqlx::types::Json;
+use sqlx::{types::Json, FromRow, Type};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
@@ -17,6 +16,26 @@ pub struct Cost {
     pub currency: Option<String>,
     pub cost: Option<OrderedFloat<f64>>,
     pub supplier: Option<Supplier>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type)]
+#[sqlx(type_name = "order_status", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum OrderStatus {
+    Draft,
+    Sampling,
+    SampleApproved,
+    MassProduction,
+    ReadyToShip,
+    Shipped,
+    Completed,
+    Cancelled,
+}
+
+impl Default for OrderStatus {
+    fn default() -> Self {
+        OrderStatus::Draft
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, FromRow)]
@@ -33,7 +52,7 @@ pub struct Order {
     pub delivery_time: DateTime<Utc>,
     pub shipping_method: String,
     pub remarks: Option<String>,
-    pub status: Option<String>,
+    pub status: OrderStatus,
     pub packing_details: Option<Json<Vec<PackingDetail>>>,
     pub order_date: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -89,9 +108,9 @@ pub struct CreateOrder {
     pub currency: String,
     pub payment_terms: String,
     pub delivery_time: DateTime<Utc>,
-    pub shipping_method: String,
+    pub shipping_method: Option<String>,
     pub remarks: Option<String>,
-    pub status: Option<String>,
+    pub status: OrderStatus,
     pub packing_details: Option<Json<Vec<PackingDetail>>>,
     pub order_date: DateTime<Utc>,
 }

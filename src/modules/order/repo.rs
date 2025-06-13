@@ -1,8 +1,9 @@
 use super::model::*;
 use crate::{
-    common::pagination::PaginatedResponse, db::AppState, db::db_conn, define_repo_delete_fn,
+    common::pagination::PaginatedResponse, db::db_conn, db::AppState, define_repo_delete_fn,
     error::ApiError,
 };
+use tracing::{debug, error};
 use uuid::Uuid;
 
 // 查询所有报价单（分页）
@@ -10,7 +11,7 @@ pub async fn list_orders(
     state: &AppState,
     params: OrderPaginationParams,
 ) -> Result<PaginatedResponse<Order>, ApiError> {
-    tracing::debug!("fetch_orders: {:?}", params);
+    debug!("fetch_orders: {:?}", params);
 
     let page = params.page.unwrap_or(1);
     let limit = params.limit.unwrap_or(10);
@@ -44,7 +45,7 @@ pub async fn list_orders(
 
     // 获取总数
     let count_query = format!("SELECT COUNT(*) FROM orders q {}", where_clause);
-    tracing::debug!(count_query);
+    debug!(count_query);
     let total: i64 = sqlx::query_scalar(&count_query)
         .fetch_one(db_conn(&state))
         .await?;
@@ -63,7 +64,7 @@ pub async fn list_orders(
         where_clause, limit, offset
     );
 
-    tracing::debug!(query_str);
+    debug!(query_str);
 
     let mut query = sqlx::query_as::<_, Order>(&query_str);
     // 按实际存在的参数顺序绑定（与占位符顺序严格一致）
@@ -91,7 +92,7 @@ pub async fn list_orders(
 
 // 获取单个报价单
 pub async fn get_order(state: &AppState, order_id: Uuid) -> Result<Order, ApiError> {
-    tracing::debug!("fetch_order_by_id: {:?}", order_id);
+    debug!("fetch_order_by_id: {:?}", order_id);
 
     let query = "SELECT * FROM orders WHERE id = $1";
     let order = sqlx::query_as::<_, Order>(query)
@@ -108,9 +109,9 @@ pub async fn get_order(state: &AppState, order_id: Uuid) -> Result<Order, ApiErr
 
 // 创建报价单
 pub async fn insert_order(state: &AppState, create_order: CreateOrder) -> Result<Order, ApiError> {
-    tracing::debug!("insert_order: {:?}", create_order);
+    let trace_id = Uuid::new_v4(); // 为当前请求生成追踪 ID（可选）
+    debug!(%trace_id, ?create_order, "insert_order: start");
 
-    // 1. 用 CTE 插入新行，并在同一个 SQL 里 LEFT JOIN customers
     let sql = r#"
         WITH new_row AS (
             INSERT INTO orders (
@@ -136,29 +137,40 @@ pub async fn insert_order(state: &AppState, create_order: CreateOrder) -> Result
         LEFT JOIN customers c ON r.customer_id = c.id
     "#;
 
-    // 2. 绑定参数并执行
-    let inserted: Order = sqlx::query_as::<_, Order>(sql)
-        .bind(&create_order.order_no) // $1
-        .bind(&create_order.order_article) // $2
-        .bind(&create_order.customer_id) // $3
-        .bind(&create_order.customer_order_no) // $4
-        .bind(&create_order.currency) // $5
-        .bind(&create_order.payment_terms) // $6
-        .bind(&create_order.delivery_time) // $7
-        .bind(&create_order.shipping_method) // $8
-        .bind(&create_order.packing_details) // $9
-        .bind(&create_order.status) // $10
-        .bind(&create_order.remarks) // $11
-        .bind(&create_order.order_date) // $12
-        .fetch_one(db_conn(&state))
-        .await
-        .map_err(|e| {
-            tracing::error!("insert_order failed: {}\nSQL: {}", e, sql);
-            ApiError::DatabaseError(e)
-        })?;
+    debug!(%trace_id, "Executing SQL insert_order");
 
-    // 3. 返回包含 customer_name 的 Order
-    Ok(inserted)
+    let query_result = sqlx::query_as::<_, Order>(sql)
+        .bind(&create_order.order_no)
+        .bind(&create_order.order_article)
+        .bind(&create_order.customer_id)
+        .bind(&create_order.customer_order_no)
+        .bind(&create_order.currency)
+        .bind(&create_order.payment_terms)
+        .bind(&create_order.delivery_time)
+        .bind(&create_order.shipping_method)
+        .bind(&create_order.packing_details)
+        .bind(create_order.status)
+        .bind(&create_order.remarks)
+        .bind(&create_order.order_date)
+        .fetch_one(db_conn(&state))
+        .await;
+
+    match query_result {
+        Ok(inserted) => {
+            debug!(%trace_id, order_id = %inserted.id, "insert_order: success");
+            Ok(inserted)
+        }
+        Err(e) => {
+            error!(
+            %trace_id,
+            error = %e,
+            sql = %sql,
+            order_no = %create_order.order_no,
+            "insert_order failed"
+        );
+            Err(ApiError::DatabaseError(e))
+        }
+    }
 }
 
 // 更新报价单
@@ -167,7 +179,7 @@ pub async fn update_order(
     order_id: Uuid,
     update_order: UpdateOrder,
 ) -> Result<Order, ApiError> {
-    tracing::debug!("update_order {}: {:?}", order_id, update_order);
+    debug!("update_order {}: {:?}", order_id, update_order);
 
     let sql = r#"
          WITH updated_row AS (
@@ -212,7 +224,7 @@ pub async fn update_order(
         .fetch_one(db_conn(&state))
         .await
         .map_err(|e| {
-            tracing::error!("update_order failed: {}\nSQL: {}", e, sql);
+            error!("update_order failed: {}\nSQL: {}", e, sql);
             ApiError::DatabaseError(e)
         })?;
 
